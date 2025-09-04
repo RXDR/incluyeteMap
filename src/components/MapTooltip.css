@@ -1,0 +1,78 @@
+/* Estilos para tooltips del mapa */
+.map-tooltip {
+  position: absolute;
+  z-index: 1000;
+  pointer-events: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 12px;
+  line-height: 1.4;
+  max-width: 300px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  animation: tooltip-fade-in 0.2s ease-out;
+}
+
+.map-tooltip .bg-white {
+  background: white;
+  color: #1f2937;
+  padding: 12px;
+}
+
+.map-tooltip .font-semibold {
+  font-weight: 600;
+  color: #2563eb;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.map-tooltip .text-sm {
+  font-size: 12px;
+}
+
+.map-tooltip .space-y-1 > * + * {
+  margin-top: 4px;
+}
+
+.map-tooltip .flex {
+  display: flex;
+}
+
+.map-tooltip .justify-between {
+  justify-content: space-between;
+}
+
+.map-tooltip .font-medium {
+  font-weight: 500;
+  color: #374151;
+}
+
+.map-tooltip .text-xs {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+@keyframes tooltip-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .map-tooltip {
+    max-width: 250px;
+    font-size: 11px;
+  }
+
+  .map-tooltip .bg-white {
+    padding: 10px;
+  }
+}

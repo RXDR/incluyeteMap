@@ -1,0 +1,146 @@
+{
+  "metadata": {
+    "stratum": "1",
+    "row_number": 4,
+    "observations": "LA CUIDADORA RESPONDIO LA ENCUESTA",
+    "processing_date": "2025-09-02T00:31:47.468Z",
+    "category_distribution": {
+      "OTROS": "",
+      "SALUD": "",
+      "CERTIFICADO": "",
+      "NECESIDADES": "",
+      "ACCESIBILIDAD": "",
+      "CUIDADEOR DE PCD": "",
+      "SOCIODEMOGRÁFICO": "",
+      "CONDICIONES DE VIDA": "",
+      "TIPO DE DISCAPACIDAD": "",
+      "NECESIDAD DE CUIDADOR": "",
+      "EDUCACIÓN Y ECONOMÍA": ""
+    }
+  },
+  "location_data": {
+    "barrio": "Carrizal",
+    "address": "CRA 4 # 49B - 34,Localidad Metropolitana, Carrizal, Barranquilla, Colombia",
+    "localidad": "Metropolitana",
+    "coordinates": {
+      "x": 10.9388604,
+      "y": -74.8032007
+    }
+  },
+  "responses_data": {
+    "OTROS": {
+      "Id": "530141",
+      "Time": "2024-07-12T10:12:33.000000Z",
+      "Letra": "B",
+      "Celular 1": "3145712947",
+      "Celular 2": "3016774956",
+      "NÚMERO 1": "4",
+      "NÚMERO 2": "49",
+      "NÚMERO 3": "34",
+      "Submitted by": "Nevis Esther Angulo Perez",
+      "PRIMER NOMBRE": "MIRIAM",
+      "SEGUNDO NOMBRE": "ASTRID",
+      "PRIMER APELLIDO": "MARTINEZ",
+      "SEGUNDO APELLIDO": "DE LOS REYES",
+      "Urb / Edificio / Bloque / Apto": "CASA",
+      "Tipo de documento del cuidador(a)": "Cédula de Ciudadanía",
+      "Edad de la persona con discapacidad": "Mayor de 65 años",
+      "Número de documento del cuidador(a)": "22349221",
+      "Tipo de documento de la persona con discapacidad": "Cédula de Ciudadanía",
+      "Número de documento de la persona con discapacidad": "22349221",
+      "Identificar el rol de la persona que responde la encuesta": "Cuidador o persona de apoyo sin discapacidad",
+      "Identificar el rol de la persona que responde la encuesta:": "Cuidador o persona de apoyo sin discapacidad",
+      "¿Cuál es su identidad de género / la identidad de género de la persona con discapacidad actualmente?": "Mujer",
+      "ENTREGUE TARJETA 1: Incluya la discapacidad de la persona a su cuidado en una de las siguientes categorías:": "7 - Múltiple",
+      "PREGUNTA DIRIGIDA EXCLUSIVAMENTE A LA PERSONA CON DISCAPACIDAD:¿Usted se autorreconoce como una persona con discapacidad?": "No sabe / No responde",
+      "¿Qué sexo le fue asignado al nacer en su certificado de nacimiento / en el certificado de nacimiento de la persona con discapacidad?": "Femenino",
+      "PREGUNTA DIRIGIDA EXCLUSIVAMENTE AL CUIDADOR(A):¿Usted reconoce a la persona que tiene a su cuidado como una persona con discapacidad?": "Si",
+      "¿Durante este año 2024, usted / la persona con discapacidad ha asistido a alguna feria organizada por la Alcaldía de Barranquilla para población con discapacidad?": "No"
+    },
+    "SALUD": {
+      "¿Usted / la persona con discapacidad está afiliado y tiene cobertura de salud?": "Si",
+      "¿A qué régimen de salud se encuentra afiliado usted / la persona con discapacidad?": "Contributivo"
+    },
+    "CERTIFICADO": {
+      "ENTREGUE CERTIFICADO: ¿Usted / la persona con discapacidad tiene este certificado de discapacidad que emite el Ministerio de Salud y Protección Social a través de la Secretaría de Salud de la Alcaldía de Barranquilla?": "No"
+    },
+    "NECESIDADES": {
+      "1 - Subsidio de transporte": "1 - Subsidio de transporte",
+      "4 - Ocio, recreación y actividades de Bienestar": "4 - Ocio, recreación y actividades de Bienestar",
+      "6 - Ayudas técnicas (Silla de ruedas, auriculares, bastones, entre otros)": "6 - Ayudas técnicas (Silla de ruedas, auriculares, bastones, entre otros)"
+    },
+    "ACCESIBILIDAD": {
+      "Asesoramiento para padres y familias": "2-Difícil",
+      "Adaptación y accesibilidad del entorno": "1-Muy difícil",
+      "Servicios educativos (Básicos, media y/o superior)": "No aplica",
+      "Formación profesional (costura, carpintería, aprendizaje, etc)": "No aplica",
+      "Adaptación de la vivienda: rampa, ampliación de puertas, otros)": "1-Muy difícil",
+      "Servicios generales de salud: consulta, tratamiento médico, medicina preventiva": "1-Muy difícil",
+      "Asesoramiento para personas con discapacidades (psicólogo, psiquiatra, trabajador social, consejero": "1-Muy difícil",
+      "Rehabilitación médica (fisioterapia, terapia ocupacional, logopedia, cirugía, yesos, férulas, etc)": "No aplica",
+      "Servicios básicos (provisión de vivienda, electricidad, agua, escuelas, caminos de acceso a las vivi": "1-Muy difícil",
+      "Empoderamiento económico (microcréditos, asociaciones de ahorro y crédito rurales (VSCA), pequeños p": "No aplica"
+    },
+    "CUIDADEOR DE PCD": {
+      "Edad del cuidador(a)": "De 55 a 64 años",
+      "1 - Subsidio de transporte": "1 - Subsidio de transporte",
+      "5 - Empleabilidad y/o Emprendimiento": "5 - Empleabilidad y/o Emprendimiento",
+      "2 - Participación en programas para la vida independiente": "2 - Participación en programas para la vida independiente",
+      "¿Usted / el cuidador(a) está afiliado y tiene cobertura de salud?": "Si",
+      "¿A qué régimen de salud se encuentra afiliado usted / el cuidador(a)?": "Contributivo",
+      "¿Cuál es el último nivel educativo alcanzado por usted / del cuidador(a)?": "Secundaria completa",
+      "¿Cuánto lleva usted / el cuidador(a) asistiendo a la persona con discapacidad?": "De 9 a 15 años",
+      "¿En qué actividad ocupó usted /  el cuidador(a) la mayor parte del tiempo el último mes?": "Cuidando a una persona con discapacidad dependiente de cuidado",
+      "¿Qué parentesco tiene usted / el cuidador(a) con la persona con discapacidad que cuida y/o apoya?": "Hijo / Hija",
+      "¿Recibe usted / el cuidador(a) remuneración por asistir y/o cuidar a la persona con discapacidad?": "No",
+      "¿Cuántas horas en el día, en promedio, usted / el cuidador(a) dedica a ayudar o prestar cuidados a esta persona?": "Entre 19 y 24 horas al día",
+      "¿Qué sexo le fue asignado al nacer en su certificado de nacimiento / en el certificado de nacimiento del cuidador(a)?": "Femenino",
+      "ENTREGUE TARJETA 2: ¿A cuánto asciende, aproximadamente, sus ingresos mensuales / los ingresos mensuales del cuidador(a)?": "1 - De $1 a $300.000",
+      "¿Cuántos días a la semana, en promedio, usted / el cuidador(a) dedica parte de su tiempo a ayudar o prestar cuidados a esta persona?": "7 días a la semana"
+    },
+    "SOCIODEMOGRÁFICO": {
+      "¿Cuál es el estado civil suyo / de la persona con discapacidad actualmente?": "Viudo/a",
+      "La vivienda en la que reside actualmente usted / la persona con discapacidad es:": "Familiar",
+      "¿Usted / la persona con discapacidad tiene hijos?¿Cuántos hijos tiene Usted / la persona con discapacidad?": "6 o más hijos"
+    },
+    "CONDICIONES DE VIDA": {
+      "Servicio de gas": "Si",
+      "Servicio de energía": "Si",
+      "Servicio de internet": "No",
+      "Servicio de acueducto": "Si",
+      "Servicio de alcantarillado": "Si",
+      "Adecuaciones para la accesibilidad de la persona con discapacidad": "Si",
+      "Dispositivos para acceso a internet (PC, tablets, teléfonos inteligentes)": "Si",
+      "¿Cuál es el medio de transporte que usted / la persona con discapacidad utiliza con mayor frecuencia?": "Taxi"
+    },
+    "TIPO DE DISCAPACIDAD": {
+      "Pensar, memorizar": "Es adquirida",
+      "Hablar y comunicarse": "Es adquirida",
+      "Caminar, correr, saltar": "Es adquirida",
+      "Oír, aun con aparatos especiales": "Es adquirida",
+      "Alimentarse, asearse, vestirse por sí mismo": "Es adquirida",
+      "Cambiar y mantener las posiciones del cuerpo": "Es adquirida",
+      "Llevar, mover, utilizar objetos con las manos": "Es adquirida",
+      "Relacionarse con las demás personas y el entorno": "Es adquirida",
+      "Percibir la luz, distinguir objetos o personas a pesar de usar lentes o gafas": "Es adquirida",
+      "ENTREGUE TARJETA 1: Incluya su discapacidad en una de las siguientes categorías:": "7 - Múltiple"
+    },
+    "NECESIDAD DE CUIDADOR": {
+      "¿Usted / la persona con discapacidad tiene a alguien que lo/la asista o apoye para su día a día?": "Si"
+    },
+    "EDUCACIÓN Y ECONOMÍA": {
+      "¿Cuál es el último nivel educativo alcanzado por usted / la persona con discapacidad?": "Primaria incompleta",
+      "¿En qué actividad ocupó usted /  la persona con discapacidad la mayor parte del tiempo el último mes?": "Otras actividades",
+      "ENTREGUE TARJETA 2: ¿A cuánto asciende, aproximadamente, los ingresos mensuales suyos / de la persona con discapacidad (incluyendo subsidios de programas sociales)?": "No tiene ingresos",
+      "SIGA CON TARJETA 2: ¿A cuánto asciende, aproximadamente, los INGRESOS TOTALES de su hogar / del hogar de la persona con discapacidad (incluyendo subsidios de programas sociales)?": "1 - De $1 a $300.000"
+    }
+  }
+}
+
+
+
+
+
+
+
+

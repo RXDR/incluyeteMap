@@ -1,0 +1,65 @@
+// Efecto para manejar el mapa de calor
+useEffect(() => {
+  if (!map || !isReady || !styleLoaded) {
+    console.log('Mapa no listo:', { map: !!map, isReady, styleLoaded });
+    return;
+  }
+
+  console.log('Preparando datos para mapa de calor:', {
+    hasFilters: combinedFilters.length > 0,
+    showHeatmap,
+    statsCount: combinedStats.length
+  });
+
+  const layerId = 'heatmap-survey';
+
+  try {
+    // Si hay datos de filtros combinados, usarlos
+    if (combinedFilters.length > 0 && showHeatmap) {
+      console.log('Usando datos de filtros combinados');
+      const heatmapData = combinedStats.map(stat => ({
+        id: `${stat.barrio}-${stat.coordx}-${stat.coordy}`,
+        lng: Number(stat.coordx),
+        lat: Number(stat.coordy),
+        intensity: Number(stat.intensity_score),
+        properties: {
+          barrio: stat.barrio,
+          localidad: stat.localidad,
+          total: Number(stat.total_encuestas),
+          matches: Number(stat.matches_count),
+          percentage: Number(stat.match_percentage)
+        }
+      }));
+
+      if (heatmapData.length > 0) {
+        addHeatmapLayer(heatmapData, layerId);
+        console.log('✅ Mapa de calor agregado con datos filtrados');
+      }
+    } else if (showHeatmap && surveyData.length > 0) {
+      console.log('Usando datos normales de encuesta');
+      // Usar datos normales
+      const heatmapData = surveyData.map(item => ({
+        id: `${item.barrio}-${item.coordenadas[0]}-${item.coordenadas[1]}`,
+        lng: item.coordenadas[0],
+        lat: item.coordenadas[1],
+        intensity: 100,
+        properties: {
+          barrio: item.barrio,
+          localidad: item.localidad,
+          total: 1,
+          matches: 1,
+          percentage: 100
+        }
+      }));
+
+      addHeatmapLayer(heatmapData, layerId);
+      console.log('✅ Mapa de calor agregado con datos normales');
+    } else {
+      // Si no hay datos o no se debe mostrar, remover la capa
+      removeLayer(layerId);
+      console.log('Mapa de calor removido');
+    }
+  } catch (error) {
+    console.error('❌ Error en el efecto del mapa de calor:', error);
+  }
+}, [map, isReady, styleLoaded, showHeatmap, combinedFilters, combinedStats, surveyData, addHeatmapLayer, removeLayer]);

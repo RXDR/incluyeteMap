@@ -1,0 +1,139 @@
+import { useEffect, useRef } from 'react';
+import { Map } from 'maplibre-gl';
+import { HeatmapManager, initializeHeatmapManager } from '@/utils/heatmapManager';
+
+interface SurveyPoint {
+  barrio: string;
+  localidad: string;
+  coordx: number;
+  coordy: number;
+  total_encuestas: number;
+  matches_count: number;
+  match_percentage: number;
+  intensity_score: number;
+}
+
+interface HeatmapProps {
+  map: Map | null;
+  data: SurveyPoint[];
+  visible: boolean;
+}
+
+export const HeatmapLayer = ({ map, data, visible }: HeatmapProps) => {
+  const heatmapRef = useRef<HeatmapManager | null>(null);
+
+  useEffect(() => {
+    let manager = heatmapRef.current;
+
+    const setupHeatmap = () => {
+      try {
+        // Validación inicial
+        if (!map || !map.isStyleLoaded()) {
+          console.log('⚠️ Mapa no disponible o estilo no cargado');
+          return;
+        }
+
+        if (!data || data.length === 0) {
+          console.log('⚠️ No hay datos para mostrar');
+          return;
+        }
+
+        // Limpiar heatmap existente si existe
+        if (manager) {
+          manager.removeHeatmap();
+        }
+
+        // Inicializar nuevo manager si es necesario
+        if (!manager) {
+          console.log('🔨 Inicializando nuevo gestor de mapa de calor');
+          manager = initializeHeatmapManager(map);
+          heatmapRef.current = manager;
+        }
+
+        // Validar y transformar datos
+        const validData = data.filter(point => {
+          const isValid = 
+            point.coordx != null && 
+            point.coordy != null && 
+            !isNaN(point.coordx) && 
+            !isNaN(point.coordy) &&
+            point.coordx !== 0 && 
+            point.coordy !== 0;
+
+          if (!isValid) {
+            console.warn('⚠️ Punto inválido:', point);
+          }
+          return isValid;
+        });
+
+        console.log('📊 Datos a procesar:', {
+          total: data.length,
+          validos: validData.length,
+          muestra: validData[0]
+        });
+
+        if (validData.length === 0) {
+          console.warn('⚠️ No hay puntos válidos después del filtrado');
+          return;
+        }
+
+        // Agregar datos al mapa
+        if (manager) {
+          manager.addHeatmap(validData);
+          manager.setVisibility(visible);
+          console.log('✅ Mapa de calor configurado:', {
+            puntos: validData.length,
+            visible: visible,
+            ejemploPunto: {
+              coordx: validData[0].coordx,
+              coordy: validData[0].coordy,
+              intensidad: validData[0].intensity_score
+            }
+          });
+        }
+      } catch (error) {
+        console.error('❌ Error configurando mapa de calor:', error);
+        // Intentar limpiar en caso de error
+        if (manager) {
+          try {
+            manager.removeHeatmap();
+          } catch (cleanupError) {
+            console.error('❌ Error durante limpieza de error:', cleanupError);
+          }
+        }
+      }
+    };
+
+    // Configurar mapa de calor cuando el estilo esté listo
+    if (map) {
+      if (map.isStyleLoaded()) {
+        console.log('🎨 Estilo del mapa listo, configurando heatmap...');
+        setupHeatmap();
+      } else {
+        console.log('⏳ Esperando a que el estilo del mapa cargue...');
+        map.once('style.load', () => {
+          console.log('🎨 Estilo del mapa cargado, configurando heatmap...');
+          setupHeatmap();
+        });
+      }
+    }
+
+    // Cleanup function
+    return () => {
+      if (manager) {
+        try {
+          console.log('🧹 Limpiando mapa de calor');
+          manager.removeHeatmap();
+          heatmapRef.current = null;
+        } catch (error) {
+          console.error('❌ Error durante limpieza:', error);
+        }
+      }
+      if (map) {
+        map.off('style.load', setupHeatmap);
+      }
+    };
+  }, [map, data, visible]);
+
+  return null;
+};
