@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ChevronDown, ChevronRight, Plus, X, Filter, Search, XCircle } from 'lucide-react';
 import { useCombinedFilters } from '../hooks/useCombinedFilters';
+import { useTheme } from '@/context/ThemeContext';
 
 interface CombinedFiltersPanelProps {
   onFiltersChange: (filters: any[]) => void;
@@ -8,6 +9,7 @@ interface CombinedFiltersPanelProps {
 }
 
 export default function CombinedFiltersPanel({ onFiltersChange, onStatsChange }: CombinedFiltersPanelProps) {
+  const { theme } = useTheme();
   const {
     categories,
     questionsByCategory,
@@ -97,11 +99,13 @@ export default function CombinedFiltersPanel({ onFiltersChange, onStatsChange }:
   // MANEJO DE FILTROS
   // =====================================================
   const handleAddFilter = (questionId: string, response: string, category?: string) => {
-    // Bloquear múltiples selecciones dentro de la misma categoría
-    if (category && combinedFilters.some(f => f.category === category)) {
-      console.warn(`La categoría '${category}' ya tiene un filtro activo. No se pueden agregar más.`);
-      return;
+    // Remover cualquier filtro existente para la misma pregunta
+    const existingFilterIndex = combinedFilters.findIndex(f => f.questionId === questionId);
+    if (existingFilterIndex !== -1) {
+      removeFilter(existingFilterIndex);
     }
+    
+    // Agregar el nuevo filtro
     addFilter(questionId, response, category);
   };
 
@@ -127,7 +131,17 @@ export default function CombinedFiltersPanel({ onFiltersChange, onStatsChange }:
   // =====================================================
   // SINCRONIZACIÓN CON EL HOOK
   // =====================================================
+  // Expose filter names for display/export
   useEffect(() => {
+    // Build a readable filter description for each filter (for parent usage)
+    combinedFilters.forEach(f => {
+      // Valid properties only
+      const question = f.questionText || f.questionId;
+      const response = f.response;
+      const category = f.category ? `(${f.category})` : '';
+      // Example: "Pregunta: Respuesta (Categoría)"
+      // You can use this logic in parent if needed
+    });
     onFiltersChange(combinedFilters);
   }, [combinedFilters, onFiltersChange]);
 
@@ -157,14 +171,16 @@ export default function CombinedFiltersPanel({ onFiltersChange, onStatsChange }:
       {/* HEADER DEL PANEL */}
       {/* ===================================================== */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+        <h3 className={`text-lg font-semibold flex items-center gap-2 ${
+          theme === 'dark' ? 'text-white' : 'text-gray-900'
+        }`}>
           <Filter className="w-5 h-5" />
           Filtros Combinados
         </h3>
         {combinedFilters.length > 0 && (
           <button
             onClick={handleClearFilters}
-            className="text-xs bg-red-600 hover:bg-red-700 px-2 py-1 rounded text-white"
+            className="text-xs px-2 py-1 rounded text-white bg-red-500 hover:bg-red-600 transition-colors"
           >
             Limpiar Todo
           </button>
@@ -182,12 +198,20 @@ export default function CombinedFiltersPanel({ onFiltersChange, onStatsChange }:
             placeholder="Buscar categorías..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-10 py-2 bg-gray-800 border border-gray-600 rounded text-white text-sm placeholder-gray-400 focus:outline-none focus:border-blue-500"
+            className={`w-full pl-10 pr-10 py-2 rounded text-sm border-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              theme === 'dark'
+                ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400'
+                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+            }`}
           />
           {searchTerm && (
             <button
               onClick={clearSearch}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300"
+              className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${
+                theme === 'dark' 
+                  ? 'text-gray-400 hover:text-gray-300' 
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
             >
               <XCircle className="w-4 h-4" />
             </button>
@@ -198,49 +222,34 @@ export default function CombinedFiltersPanel({ onFiltersChange, onStatsChange }:
         {/* CONTROLES DE VISIBILIDAD */}
         {/* ===================================================== */}
         <div className="flex items-center justify-between text-xs">
-          <span className="text-gray-400">
+          <span className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
             {filteredCategories.length} de {categories.length} categorías
           </span>
           <button
             onClick={() => setShowAllCategories(!showAllCategories)}
-            className="text-blue-400 hover:text-blue-300 underline"
+            className={`underline ${
+              theme === 'dark' 
+                ? 'text-blue-400 hover:text-blue-300' 
+                : 'text-blue-600 hover:text-blue-700'
+            }`}
           >
             {showAllCategories ? 'Mostrar solo activas' : 'Mostrar todas'}
           </button>
         </div>
       </div>
 
-      {/* ===================================================== */}
-      {/* FILTROS ACTIVOS */}
-      {/* ===================================================== */}
-      {combinedFilters.length > 0 && (
-        <div className="p-3 bg-gray-800 rounded">
-          <h4 className="text-sm font-medium text-gray-300 mb-2">Filtros Activos ({combinedFilters.length})</h4>
-          <div className="space-y-2">
-            {combinedFilters.map((filter, index) => (
-              <div key={index} className="flex items-center justify-between bg-gray-700 p-2 rounded">
-                <span className="text-xs text-white">
-                  {filter.category && `${filter.category}: `}
-                  Pregunta {filter.questionId} = {filter.response}
-                </span>
-                <button
-                  onClick={() => handleRemoveFilter(index)}
-                  className="text-red-300 hover:text-red-100"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+
 
       {/* ===================================================== */}
       {/* ESTADO DE CARGA DE ESTADÍSTICAS */}
       {/* ===================================================== */}
       {statsLoading && (
-        <div className="p-2 bg-gray-800 rounded text-center">
-          <div className="animate-pulse text-gray-300">🔄 Aplicando filtros...</div>
+        <div className={`p-2 rounded text-center ${
+          theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'
+        }`}>
+          <div className={`animate-pulse ${
+            theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+          }`}>🔄 Aplicando filtros...</div>
         </div>
       )}
 
@@ -250,19 +259,33 @@ export default function CombinedFiltersPanel({ onFiltersChange, onStatsChange }:
       <div className="space-y-2">
         {filteredCategories.length > 0 ? (
           filteredCategories.map((category) => (
-            <div key={category} className="border border-gray-600 rounded-lg overflow-hidden">
+            <div key={category} className={`border rounded-lg overflow-hidden ${
+              theme === 'dark' ? 'border-gray-600' : 'border-gray-200'
+            }`}>
               {/* ===================================================== */}
               {/* HEADER DE CATEGORÍA */}
               {/* ===================================================== */}
               <button
                 onClick={() => toggleCategory(category)}
-                className="w-full p-3 text-left bg-gray-700 hover:bg-gray-600 rounded-t flex items-center justify-between"
+                className={`w-full p-3 text-left rounded-t flex items-center justify-between ${
+                  theme === 'dark'
+                    ? 'bg-gray-700 hover:bg-gray-600 text-white'
+                    : 'bg-gray-50 hover:bg-gray-100 text-gray-900'
+                }`}
               >
-                <span className="font-medium text-white">{category}</span>
+                <span className={`font-medium ${
+                  theme === 'dark' ? 'text-white' : 'text-gray-900'
+                }`}>
+                  {category.replace("CUIDADEOR", "CUIDADOR")}
+                </span>
                 <div className="flex items-center gap-2">
                   {questionsByCategory[category] && (
-                    <span className="text-xs text-gray-400 bg-gray-600 px-2 py-1 rounded">
-                      {questionsByCategory[category].length} preguntas
+                    <span className={`text-xs px-2 py-1 rounded ${
+                      theme === 'dark'
+                        ? 'text-gray-400 bg-gray-600'
+                        : 'text-gray-600 bg-gray-200'
+                    }`}>
+                      
                     </span>
                   )}
                   {expandedCategories.has(category) ? (
@@ -277,28 +300,40 @@ export default function CombinedFiltersPanel({ onFiltersChange, onStatsChange }:
               {/* PREGUNTAS DE LA CATEGORÍA - SIN SCROLL INTERNO */}
               {/* ===================================================== */}
               {expandedCategories.has(category) && (
-                <div className="bg-gray-800 rounded-b">
+                <div className={`rounded-b ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
                   {questionsByCategory[category] ? (
                     <div className="p-3 space-y-2">
                       {questionsByCategory[category].map((question) => (
-                        <div key={question.question_id} className="border border-gray-600 rounded p-2">
+                        <div key={question.question_id} className={`border rounded p-2 ${
+                          theme === 'dark' ? 'border-gray-600' : 'border-gray-200'
+                        }`}>
                           {/* ===================================================== */}
                           {/* PREGUNTA PRINCIPAL */}
                           {/* ===================================================== */}
                           <button
                             onClick={() => selectQuestion(question.question_id, category)}
-                            className="w-full text-left hover:bg-gray-700 p-2 rounded"
+                            className={`w-full text-left p-2 rounded ${
+                              theme === 'dark' 
+                                ? 'hover:bg-gray-700' 
+                                : 'hover:bg-gray-100'
+                            }`}
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex-1">
-                                <div className="font-medium text-sm text-white">
+                                <div className={`font-medium text-sm ${
+                                  theme === 'dark' ? 'text-white' : 'text-gray-900'
+                                }`}>
                                   {question.question_text || `Pregunta ${question.question_id}`}
                                 </div>
-                                <div className="text-xs text-gray-400">
-                                  {question.response_count} respuestas
+                                <div className={`text-xs ${
+                                  theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                                }`}>
+                                  
                                 </div>
                               </div>
-                              <Plus className="w-4 h-4 text-gray-400" />
+                              <Plus className={`w-4 h-4 ${
+                                theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                              }`} />
                             </div>
                           </button>
 
@@ -306,37 +341,51 @@ export default function CombinedFiltersPanel({ onFiltersChange, onStatsChange }:
                           {/* RESPUESTAS DE LA PREGUNTA - COMPLETAS SIN SCROLL */}
                           {/* ===================================================== */}
                           {selectedQuestion === question.question_id && (
-                            <div className="mt-2 p-2 bg-gray-700 rounded">
+                            <div className={`mt-2 p-2 rounded ${
+                              theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'
+                            }`}>
                               {responsesLoading ? (
-                                <div className="text-center text-sm text-gray-300">🔄 Cargando respuestas...</div>
+                                <div className={`text-center text-sm ${
+                                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                                }`}>🔄 Cargando respuestas...</div>
                               ) : (
                                 <div className="space-y-1">
                                   {questionResponses.map((response, idx) => {
-                                    const isCategoryBlocked = category && combinedFilters.some(f => f.category === category);
                                     const isSelected = combinedFilters.some(f => f.questionId === question.question_id && f.response === response.response_value);
 
+                                    // Mostrar label normalizado si existe, si no el valor original
+                                    const label = response.labelNormalizado || response.response_value;
+
                                     return (
-                                      <button
+                                      <label
                                         key={idx}
-                                        onClick={() => handleAddFilter(
-                                          question.question_id,
-                                          response.response_value,
-                                          category
-                                        )}
-                                        disabled={isCategoryBlocked && !isSelected}
                                         className={`w-full text-left p-2 rounded text-sm flex items-center justify-between ${
                                           isSelected
                                             ? 'bg-blue-600 text-white'
-                                            : isCategoryBlocked
-                                            ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                                            : 'hover:bg-gray-600'
+                                            : theme === 'dark'
+                                            ? 'hover:bg-gray-600 text-white'
+                                            : 'hover:bg-gray-200 text-gray-900'
                                         }`}
                                       >
-                                        <span className="text-white">{response.response_value}</span>
-                                        <span className="text-xs text-gray-400">
+                                        <div className="flex items-center space-x-2">
+                                          <input
+                                            type="radio"
+                                            name={`question-${question.question_id}`}
+                                            value={response.response_value}
+                                            checked={isSelected}
+                                            onChange={() => handleAddFilter(
+                                              question.question_id,
+                                              response.response_value,
+                                              category
+                                            )}
+                                            className="text-blue-600 border-gray-300 focus:ring-blue-500"
+                                          />
+                                          <span className={`${isSelected ? 'text-white' : theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{label}</span>
+                                        </div>
+                                        <span className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                                           {response.response_count} ({response.response_percentage}%)
                                         </span>
-                                      </button>
+                                      </label>
                                     );
                                   })}
                                 </div>
@@ -365,7 +414,11 @@ export default function CombinedFiltersPanel({ onFiltersChange, onStatsChange }:
       {/* ===================================================== */}
       {/* INFORMACIÓN DEL SISTEMA */}
       {/* ===================================================== */}
-      <div className="p-3 bg-gray-800 rounded text-xs text-gray-400">
+      <div className={`p-3 rounded text-xs ${
+        theme === 'dark' 
+          ? 'bg-gray-800 text-gray-400' 
+          : 'bg-gray-50 text-gray-600'
+      }`}>
         <div className="font-medium mb-1">💡 Consejos:</div>
         <div>• Usa la búsqueda para encontrar categorías específicas</div>
         <div>• Solo se muestran categorías activas por defecto</div>

@@ -56,7 +56,7 @@ export const SurveyDataVisualizer: React.FC<SurveyDataVisualizerProps> = ({
   const loadCategories = async () => {
     try {
       const { data: categoryData, error } = await supabase
-        .rpc('get_available_categories');
+        .rpc('get_available_categoriess');
       
       if (error) throw error;
       setCategories(categoryData || []);

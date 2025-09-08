@@ -1,9 +1,10 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import geoBarranquilla from '../data/geo-barranquilla.json';
 import LeyendaHeatmap from '@/components/ui/leyenda-heatmap';
-import { FilterStats } from '@/hooks/useCombinedFilters';
+import Top10Paneles from '@/components/Top10Paneles';
+import { FilterStats, useCombinedFilters } from '@/hooks/useCombinedFilters';
 import { FeatureCollection, Geometry } from 'geojson';
 
 interface TestMapProps {
@@ -16,7 +17,7 @@ interface TestMapProps {
     coordx: number;
     coordsy: number;
     total_encuestas: number;
-    matches_count: number;
+    matches_count: number; // Agregado para mostrar en la interfaz
     match_percentage: number;
     intensity_score: number;
   }[];
@@ -25,32 +26,70 @@ interface TestMapProps {
 const TestMap: React.FC<TestMapProps> = ({ combinedStats, selectedMetric, showHeatmap, incomeData }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
+  // Estado para tooltip flotante
+  const [hoveredFeature, setHoveredFeature] = useState<any>(null);
+  const [tooltipPos, setTooltipPos] = useState<{x: number, y: number} | null>(null);
+
+  // Calcular el máximo de respuestas para ajustar opacidad
+  const maxEncuestas = incomeData
+    ? Math.max(...incomeData.map(d => d.total_encuestas))
+    : combinedStats && combinedStats.length > 0
+      ? Math.max(...combinedStats.map(d => d.total_encuestas || 0))
+      : 1;
+
+  const maxMatchesCount = incomeData
+    ? Math.max(...incomeData.map(d => d.matches_count))
+    : combinedStats && combinedStats.length > 0
+      ? Math.max(...combinedStats.map(d => d.matches_count || 0))
+      : 1;
 
   const buildFeatureCollection = useCallback((): FeatureCollection<Geometry, { [name: string]: any }> => {
     const features = (geoBarranquilla as any).features.map((f: any) => {
       const properties = { ...f.properties };
       const nombre = String(properties.nombre || 'Barrio').trim().toLowerCase();
-      
+      let totalEncuestas = 0;
+      let score = 0;
+      let matchesCount = 0;
+
       // Si hay datos de ingresos, usarlos, sino usar stats combinados
       if (incomeData) {
         const incomeStats = incomeData.find(stat => stat.barrio.trim().toLowerCase() === nombre);
-        properties.score = incomeStats?.match_percentage || 0;
-        properties.intensity_score = incomeStats?.intensity_score || 0;
-        properties.total_encuestas = incomeStats?.total_encuestas || 0;
-        properties.matches_count = incomeStats?.matches_count || 0;
+        if (incomeStats && incomeStats.matches_count > 0) {
+          score = incomeStats.match_percentage;
+          properties.score = score;
+          properties.intensity_score = incomeStats.intensity_score;
+          totalEncuestas = incomeStats.total_encuestas;
+          matchesCount = incomeStats.matches_count;
+          properties.total_encuestas = totalEncuestas;
+          properties.matches_count = matchesCount;
+          // Solo establecer opacidad si hay matches
+          properties.fill_opacity = maxMatchesCount > 0 ? 0.5 + 0.5 * (matchesCount / maxMatchesCount) : 0.7;
+        } else {
+          properties.matches_count = 0;
+        }
       } else {
         const barrioStats = combinedStats?.find(stat => stat.barrio.trim().toLowerCase() === nombre);
-        properties.score = barrioStats?.match_percentage || 0;
+        if (barrioStats && barrioStats.matches_count > 0) {
+          score = barrioStats.match_percentage;
+          properties.score = score;
+          properties.intensity_score = score; // Usar el score como intensity_score para el color
+          totalEncuestas = barrioStats.total_encuestas;
+          matchesCount = barrioStats.matches_count;
+          properties.total_encuestas = totalEncuestas;
+          properties.matches_count = matchesCount;
+          // Solo establecer opacidad si hay matches
+          properties.fill_opacity = maxMatchesCount > 0 ? 0.5 + 0.5 * (matchesCount / maxMatchesCount) : 0.7;
+        } else {
+          properties.matches_count = 0;
+        }
       }
-
       return {
         ...f,
         properties,
       };
     });
-
     return { type: 'FeatureCollection', features };
-  }, [combinedStats]);
+  }, [combinedStats, incomeData, maxMatchesCount]);
 
   useEffect(() => {
     if (!mapContainer.current) return;
@@ -68,9 +107,20 @@ const TestMap: React.FC<TestMapProps> = ({ combinedStats, selectedMetric, showHe
         },
         layers: [
           {
+            id: 'background',
+            type: 'background',
+            paint: {
+              'background-color': 'transparent',
+              'background-opacity': 0
+            }
+          },
+          {
             id: 'osm',
             type: 'raster',
             source: 'osm',
+            paint: {
+              'raster-opacity': 1
+            }
           },
         ],
       },
@@ -78,12 +128,27 @@ const TestMap: React.FC<TestMapProps> = ({ combinedStats, selectedMetric, showHe
       zoom: 12,
     });
 
+    // Add zoom and rotation controls to top-left
+    map.current.addControl(new maplibregl.NavigationControl({
+      showCompass: true,
+      showZoom: true,
+      visualizePitch: true
+    }), 'bottom-left');
+
+    // Move the zoom controls above the legend
+    const navigationControl = document.querySelector('.maplibregl-ctrl-top-left');
+    if (navigationControl) {
+      navigationControl.setAttribute('style', 'top: 10px; left: 10px; z-index: 11;');
+    }
+
     map.current.on('load', () => {
       map.current?.addSource('barranquilla', {
         type: 'geojson',
         data: buildFeatureCollection(),
       });
 
+      // Agregar capa de relleno
+      // Solo agregamos una capa para los barrios con datos (matches_count > 0)
       map.current?.addLayer({
         id: 'barrios',
         type: 'fill',
@@ -92,47 +157,63 @@ const TestMap: React.FC<TestMapProps> = ({ combinedStats, selectedMetric, showHe
           'fill-color': [
             'interpolate',
             ['linear'],
-            ['get', 'score'],
-            0, '#e5e5e5',
-            25, '#ffe4b5',
-            50, '#ffa500',
-            75, '#ff4500',
-            100, '#8b0000'
+            ['get', 'intensity_score'],
+              0, '#cc3333',
+            25, '#b30000',
+            50, '#990000',
+            75, '#800000',
+            100, '#4d0000'
           ],
-          'fill-opacity': 0.7,
+          'fill-opacity': ['get', 'fill_opacity']
         },
+        layout: {
+          visibility: 'visible',
+        },
+        filter: ['>', ['get', 'matches_count'], 0]
       });
-    });
 
-    // Agregar popup
-    const popup = new maplibregl.Popup({
-      closeButton: false,
-      closeOnClick: false
+      // Agregar bordes solo para barrios con datos (matches_count > 0)
+      map.current?.addLayer({
+        id: 'barrios-line',
+        type: 'line',
+        source: 'barranquilla',
+        paint: {
+          'line-color': '#000',
+          'line-width': 1,
+          'line-opacity': 0.3
+        },
+        layout: {
+          visibility: 'visible',
+        },
+        filter: ['>', ['get', 'matches_count'], 0]
+      });
+
+
     });
 
     map.current.on('mousemove', 'barrios', (e) => {
       if (e.features && e.features.length > 0) {
         const feature = e.features[0];
-        const score = feature.properties.score || 0;
-        
-        // Cambiar el cursor a pointer
-        map.current!.getCanvas().style.cursor = 'pointer';
-        
-        // HTML del popup
-        const html = `
-          <div class="px-2 py-1">
-            <div class="font-bold">${feature.properties.nombre}</div>
-            <div class="text-sm">Coincidencia: ${score.toFixed(1)}%</div>
-          </div>
-        `;
-        
-        popup.setLngLat(e.lngLat).setHTML(html).addTo(map.current!);
+        const properties = feature.properties || {};
+        console.log('🔍 Hovered feature properties:', properties); // Registro adicional
+        setHoveredFeature(properties);
+        if (mapContainer.current && e.originalEvent) {
+          const rect = mapContainer.current.getBoundingClientRect();
+          setTooltipPos({
+            x: e.originalEvent.clientX - rect.left,
+            y: e.originalEvent.clientY - rect.top
+          });
+        }
+      } else {
+        console.log('🔍 No feature hovered'); // Registro adicional
+        setHoveredFeature(null);
+        setTooltipPos(null);
       }
     });
 
     map.current.on('mouseleave', 'barrios', () => {
-      map.current!.getCanvas().style.cursor = '';
-      popup.remove();
+      setHoveredFeature(null);
+      setTooltipPos(null);
     });
 
     return () => {
@@ -149,15 +230,45 @@ const TestMap: React.FC<TestMapProps> = ({ combinedStats, selectedMetric, showHe
     }
   }, [combinedStats, buildFeatureCollection]);
 
+  const { combinedFilters } = useCombinedFilters();
   return (
     <div className="relative w-full h-full">
       <div ref={mapContainer} className="w-full h-full" />
       {(combinedStats.length > 0 || incomeData) && (
-        <div className="absolute bottom-4 right-4 z-10">
-          <LeyendaHeatmap 
-            mode={incomeData ? 'income' : 'combined'}
-            title={incomeData ? 'Análisis de Ingresos' : 'Coincidencias de Filtros'}
-          />
+        <>
+          <div className="absolute top-4 left-4 z-10">
+            <LeyendaHeatmap 
+              mode={incomeData ? 'income' : 'combined'}
+              title={incomeData ? 'Análisis de Ingresos' : 'Coincidencias de Filtros'}
+            />
+          </div>
+        </>
+      )}
+      {hoveredFeature && tooltipPos && (
+        <div
+          className="z-50 pointer-events-none"
+          style={{
+            position: 'absolute',
+            left: tooltipPos.x + 16,
+            top: tooltipPos.y + 16,
+            background: 'rgba(255,255,255,0.97)',
+            color: '#222',
+            borderRadius: 8,
+            boxShadow: '0 2px 12px rgba(0,0,0,0.18)',
+            padding: '12px 16px',
+            minWidth: 220,
+            maxWidth: 320,
+            fontSize: 14,
+            border: '2px solid #ffa500',
+            fontFamily: 'inherit',
+          }}
+        >
+          <div style={{fontWeight: 700, fontSize: 16, marginBottom: 4}}>{hoveredFeature.nombre || ''}</div>
+          <div><b>Localidad:</b> {hoveredFeature.localidad || ''}</div>
+          <div><b>Pieza urbana:</b> {hoveredFeature.pieza_urba || ''}</div>
+          <div><b>Coincidencia:</b> {hoveredFeature.score !== undefined ? hoveredFeature.score.toFixed(2) + '%' : ''}</div>
+          <div><b>Personas que cumplen con el filtro:</b> {hoveredFeature.matches_count !== undefined ? hoveredFeature.matches_count : 'Sin respuestas'}</div>
+          <div><b>Total de encuestas:</b> {hoveredFeature.total_encuestas !== undefined ? hoveredFeature.total_encuestas : 'Sin respuestas'}</div>
         </div>
       )}
     </div>

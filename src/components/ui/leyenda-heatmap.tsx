@@ -15,17 +15,17 @@ interface LeyendaHeatmapProps {
 export function LeyendaHeatmap({ className, mode = 'combined', title = 'Leyenda del Mapa' }: LeyendaHeatmapProps) {
   // Rangos según el modo
   const rangos = mode === 'income' ? [
-    { min: 0, max: 25, color: '#e5e5e5', label: 'Sin ingresos', description: 'Población sin ingresos' },
-    { min: 25, max: 50, color: '#ffe4b5', label: 'Ingresos bajos', description: '$1 - $300.000' },
-    { min: 50, max: 75, color: '#ffa500', label: 'Ingresos medios', description: '$300.001 - $1.000.000' },
-    { min: 75, max: 100, color: '#ff4500', label: 'Ingresos altos', description: '$1.000.001 - $2.000.000' },
-    { min: 100, max: null, color: '#8b0000', label: 'Ingresos muy altos', description: 'Más de $2.000.000' },
+    { min: 0, max: 25, color: '#cc3333', label: 'Sin ingresos', description: 'Población sin ingresos' },
+    { min: 25, max: 50, color: '#b30000', label: 'Ingresos bajos', description: '$1 - $300.000' },
+    { min: 50, max: 75, color: '#990000', label: 'Ingresos medios', description: '$300.001 - $1.000.000' },
+    { min: 75, max: 100, color: '#800000', label: 'Ingresos altos', description: '$1.000.001 - $2.000.000' },
+    { min: 100, max: null, color: '#4d0000', label: 'Ingresos muy altos', description: 'Más de $2.000.000' },
   ] : [
-    { min: 0, max: 25, color: '#e5e5e5', label: '0 - 25%', description: 'Coincidencia Baja' },
-    { min: 25, max: 50, color: '#ffe4b5', label: '25 - 50%', description: 'Coincidencia Media-Baja' },
-    { min: 50, max: 75, color: '#ffa500', label: '50 - 75%', description: 'Coincidencia Media' },
-    { min: 75, max: 100, color: '#ff4500', label: '75 - 100%', description: 'Coincidencia Alta' },
-    { min: 100, max: null, color: '#8b0000', label: '100%', description: 'Coincidencia Total' },
+    { min: 0, max: 25, color: '#cc3333', label: '0 - 25%', description: 'Coincidencia Baja' },
+    { min: 25, max: 50, color: '#b30000', label: '25 - 50%', description: 'Coincidencia Media-Baja' },
+    { min: 50, max: 75, color: '#990000', label: '50 - 75%', description: 'Coincidencia Media' },
+    { min: 75, max: 100, color: '#800000', label: '75 - 100%', description: 'Coincidencia Alta' },
+    { min: 100, max: null, color: '#4d0000', label: '100%', description: 'Coincidencia Total' },
   ];
 
   return (

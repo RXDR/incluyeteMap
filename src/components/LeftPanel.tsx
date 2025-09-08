@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { FiBarChart, FiFileText, FiChevronDown, FiChevronRight, FiTrendingUp, FiDollarSign } from 'react-icons/fi';
 import CombinedFiltersPanel from '../components/CombinedFiltersPanel';
-import FiltrosActivos from './FiltrosActivos';
+import { useTheme } from '@/context/ThemeContext';
 import IncomeAnalysis from './IncomeAnalysis';
+import ExcelUploaderModal from './ExcelUploaderModal';
 import { CombinedFilter } from '../hooks/useCombinedFilters';
 
 interface LeftPanelProps {
@@ -41,6 +42,16 @@ const LeftPanel: React.FC<LeftPanelProps> = ({
   uploadStats,
   className
 }) => {
+  const [isUploaderModalOpen, setIsUploaderModalOpen] = useState(false);
+  const { theme } = useTheme();
+
+  const handleUploadComplete = (stats: any) => {
+    // Actualizamos las estadísticas
+    if (stats) {
+      console.log('📊 Upload completado:', stats);
+    }
+    setIsUploaderModalOpen(false);
+  };
   return (
     <div className={`w-full ${className}`}>
       <div className="space-y-6">
@@ -54,7 +65,9 @@ const LeftPanel: React.FC<LeftPanelProps> = ({
                 className={`flex items-center space-x-1 text-xs px-2 py-1 rounded ${
                   showCombinedFilters 
                     ? 'bg-green-600 text-white' 
-                    : 'text-gray-400 hover:text-white'
+                    : theme === 'dark'
+                      ? 'text-gray-400 hover:text-white'
+                      : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
                 <FiBarChart className="w-3 h-3" />
@@ -70,25 +83,14 @@ const LeftPanel: React.FC<LeftPanelProps> = ({
                 onStatsChange={handleCombinedStatsChange}
               />
               
-              {/* Filtros Activos */}
-              {combinedFilters.length > 0 && (
-                <div className="mt-4">
-                  <FiltrosActivos 
-                    filtros={combinedFilters}
-                    onRemove={(index) => {
-                      const updatedFilters = [...combinedFilters];
-                      updatedFilters.splice(index, 1);
-                      handleCombinedFiltersChange(updatedFilters);
-                    }}
-                    className="bg-gray-800 p-3 rounded-lg"
-                  />
-                </div>
-              )}
+
             </>
           ) : (
-            <div className="bg-gray-700 rounded-lg p-3">
-              <div className="text-sm font-medium mb-2">Seleccione Análisis Avanzado</div>
-              <div className="space-y-1 text-xs opacity-80">
+            <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'} rounded-lg p-3`}>
+              <div className={`text-sm font-medium mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                Seleccione Análisis Avanzado
+              </div>
+              <div className={`space-y-1 text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                 <p>Utilice la opción de Análisis Avanzado para aplicar filtros y visualizar datos en el mapa.</p>
               </div>
             </div>
@@ -100,13 +102,7 @@ const LeftPanel: React.FC<LeftPanelProps> = ({
 
         {/* Análisis de Ingresos */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between cursor-pointer" onClick={() => toggleSection('income')}>
-            <h4 className="font-semibold flex items-center space-x-2">
-              <FiDollarSign className="w-4 h-4" />
-              <span>Análisis de Ingresos</span>
-            </h4>
-            {expandedSections.income ? <FiChevronDown className="w-4 h-4" /> : <FiChevronRight className="w-4 h-4" />}
-          </div>
+         
           
           {expandedSections.income && (
             <IncomeAnalysis 
@@ -131,23 +127,32 @@ const LeftPanel: React.FC<LeftPanelProps> = ({
               {/* Botones de control */}
               <div className="flex flex-col space-y-2">
                 <button
-                  onClick={() => setShowExcelUploader(!showExcelUploader)}
+                  onClick={() => setIsUploaderModalOpen(true)}
                   className={`flex items-center space-x-2 text-sm px-3 py-2 rounded transition-colors ${
-                    showExcelUploader 
-                      ? 'bg-green-600 text-white' 
-                      : 'bg-gray-700 text-gray-300 hover:text-white'
+                    theme === 'dark' 
+                      ? 'bg-gray-700 text-gray-300 hover:text-white hover:bg-gray-600' 
+                      : 'bg-gray-100 text-gray-600 hover:text-gray-900 hover:bg-gray-200'
                   }`}
                 >
                   <FiFileText className="w-4 h-4" />
                   <span>Subir Excel</span>
                 </button>
                 
+                {/* Modal de carga de Excel */}
+                <ExcelUploaderModal
+                  isOpen={isUploaderModalOpen}
+                  onClose={() => setIsUploaderModalOpen(false)}
+                  onUploadComplete={handleUploadComplete}
+                />
+                
                 <button
                   onClick={() => setShowDataVisualizer(!showDataVisualizer)}
                   className={`flex items-center space-x-2 text-sm px-3 py-2 rounded transition-colors ${
                     showDataVisualizer 
                       ? 'bg-blue-600 text-white' 
-                      : 'bg-gray-700 text-gray-300 hover:text-white'
+                      : theme === 'dark'
+                        ? 'bg-gray-700 text-gray-300 hover:text-white'
+                        : 'bg-gray-100 text-gray-600 hover:text-gray-900 hover:bg-gray-200'
                   }`}
                 >
                   <FiBarChart className="w-4 h-4" />
@@ -157,27 +162,33 @@ const LeftPanel: React.FC<LeftPanelProps> = ({
 
               {/* Estadísticas de subida */}
               {uploadStats && (
-                <div className="bg-gray-700 rounded-lg p-3">
-                  <div className="text-sm font-medium mb-2 flex items-center space-x-2">
+                <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'} rounded-lg p-3`}>
+                  <div className={`text-sm font-medium mb-2 flex items-center space-x-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                     <FiTrendingUp className="w-4 h-4 mr-1" />
                     <span>Estadísticas de Procesamiento</span>
                   </div>
-                  <div className="space-y-1 text-xs">
+                  <div className={`space-y-1 text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                     <div className="flex justify-between">
                       <span>Total Registros:</span>
                       <span className="font-medium">{uploadStats.totalRecords}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Exitosos:</span>
-                      <span className="font-medium text-green-400">{uploadStats.successful}</span>
+                      <span className={`font-medium ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
+                        {uploadStats.successful}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Con Categoría:</span>
-                      <span className="font-medium text-blue-400">{uploadStats.withCategory}</span>
+                      <span className={`font-medium ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
+                        {uploadStats.withCategory}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Fallidos:</span>
-                      <span className="font-medium text-red-400">{uploadStats.failed}</span>
+                      <span className={`font-medium ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>
+                        {uploadStats.failed}
+                      </span>
                     </div>
                   </div>
                 </div>

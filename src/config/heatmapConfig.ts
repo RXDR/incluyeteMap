@@ -4,8 +4,9 @@ export const HEATMAP_CONFIG = {
       'interpolate',
       ['linear'],
       ['get', 'intensity'],
-      0, 0.3,   // Aumentar valor mínimo
-      50, 0.7,  // Aumentar valor medio
+      0, 0.1,   // Reducir valor mínimo para mayor claridad
+      10, 0.3,  // Ajustar valor medio
+      50, 0.7,  // Ajustar valor alto
       100, 1    // Mantener máximo
     ]
   },
@@ -14,16 +15,16 @@ export const HEATMAP_CONFIG = {
       'interpolate',
       ['linear'],
       ['zoom'],
-      0, 15,    // Radio base más grande
-      9, 30,    // Radio medio más grande
-      13, 50    // Radio máximo más grande
+      0, 10,    // Reducir radio base
+      9, 20,    // Reducir radio medio
+      13, 40    // Reducir radio máximo
     ],
     opacity: 0.9,
     colors: [
       'interpolate',
       ['linear'],
       ['heatmap-density'],
-      0, 'rgba(65,182,196,0)',    // Cian claro
+      0, 'rgba(255,255,204,0)',    // Amarillo claro
       0.2, 'rgba(161,218,180,1)', // Verde claro
       0.4, 'rgba(65,182,196,1)',  // Cian
       0.6, 'rgba(44,127,184,1)',  // Azul medio
@@ -35,8 +36,8 @@ export const HEATMAP_CONFIG = {
     'interpolate',
     ['linear'],
     ['zoom'],
-    0, 0.5,   // Intensidad base más alta
-    9, 0.8,   // Intensidad media más alta
-    13, 1     // Intensidad máxima
+    0, 0.3,   // Reducir intensidad base
+    9, 0.6,   // Ajustar intensidad media
+    13, 1     // Mantener intensidad máxima
   ]
 };

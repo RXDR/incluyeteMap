@@ -36,6 +36,7 @@ export interface CombinedFilter {
   questionId: string;
   response: string;
   category?: string;
+  questionText?: string;
 }
 
 // =====================================================
@@ -177,7 +178,7 @@ export const useCombinedFilters = () => {
 
         console.log('🔄 Cargando categorías desde la base de datos...');
 
-        const { data, error } = await supabase.rpc('get_available_categories');
+        const { data, error } = await supabase.rpc('get_available_categoriess');
 
         if (error) {
             console.error('❌ Error al cargar categorías:', error);
@@ -216,9 +217,10 @@ export const useCombinedFilters = () => {
 
         console.log(`🔄 Cargando preguntas para categoría: ${category}`);
 
-        const { data, error } = await supabase.rpc('get_questions_by_category', {
-            target_category: category
-        });
+       const { data, error } = await supabase.rpc('get_questions_by_category', {
+  category_name: category
+})
+
 
         if (error) {
             console.error('❌ Error al cargar preguntas:', error);
@@ -400,6 +402,9 @@ export const useCombinedFilters = () => {
         dataExample: data?.slice(0, 2) || 'Sin datos'
       });
       
+      // Agregar un console.log para verificar matches_count
+      console.log('🔍 Verificando matches_count en los datos recibidos:', data.map(d => d.matches_count));
+      
       // Si la nueva función sin límite no existe, probar con la versión mejorada (límite 500)
       if (error && error.message?.includes('does not exist')) {
         console.log('ℹ️ Función sin límite no disponible, probando función mejorada con límite 500');
@@ -561,11 +566,14 @@ export const useCombinedFilters = () => {
         return prev;
       }
       
+      const questionText = category ? getQuestionText(questionId, category) : questionId;
+      
       console.log(`✅ Agregando filtro: ${category || 'Sin categoría'} / ${questionId} / ${response}`);
       return [...prev, { 
         questionId, 
         response, 
-        category: category || '' 
+        category: category || '',
+        questionText: questionText
       }];
     });
   }, []);

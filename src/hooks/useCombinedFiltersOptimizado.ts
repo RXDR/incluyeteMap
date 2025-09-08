@@ -63,7 +63,7 @@ interface QuestionByCategory {
   response_count: number;
 }
 
-// Hook optimizado
+// Hook optimizado y profesional
 export function useCombinedFiltersOptimizado() {
   // Refs para evitar re-renderizaciones innecesarias
   const isMounted = useRef(true);
@@ -143,12 +143,13 @@ export function useCombinedFiltersOptimizado() {
   // =====================================================
   const getQuestionResponses = useCallback(async (questionId: string, category: string) => {
     try {
-      // Aquí deberías hacer una consulta real a Supabase para obtener las respuestas de la pregunta
-      // Ejemplo:
-      // const { data, error } = await supabase.rpc('get_question_responses', { question_id: questionId, category });
-      // if (error) throw error;
-      // return data;
-      return [];
+      // Llamada directa a la función SQL que ya normaliza y agrupa
+      const { data, error } = await supabase.rpc('get_question_responses_normalized', {
+        category,
+        question: questionId
+      });
+      if (error) throw error;
+      return data || [];
     } catch (err) {
       console.error('Error al cargar respuestas:', err);
       return [];
@@ -224,18 +225,15 @@ export function useCombinedFiltersOptimizado() {
   // =====================================================
   const addFilter = useCallback((questionId: string, response: string, category?: string) => {
     setCombinedFilters(prev => {
-      // Validar si ya existe una respuesta para la misma pregunta
+      // Solo bloquear si ya existe una respuesta para la misma pregunta (independiente de la categoría)
       const existingFilter = prev.find(
-        filter => filter.questionId === questionId && filter.category === (category || '')
+        filter => filter.questionId === questionId
       );
-
-      // Bloquear si ya existe una respuesta para la misma pregunta
       if (existingFilter) {
         toast.warning('Ya existe una respuesta seleccionada para esta pregunta. Por favor, elimínala antes de seleccionar otra.');
         return prev;
       }
-
-      // Agregar el nuevo filtro
+      // Permitir agregar respuestas de diferentes preguntas aunque sean de la misma categoría
       return [
         ...prev,
         {
@@ -296,6 +294,30 @@ export function useCombinedFiltersOptimizado() {
     // No incluir filterStats en las dependencias para evitar ciclos
   }, [combinedFilters, applyCombinedFilters]);
 
+  // Obtener top de respuestas para una pregunta (rápido)
+  const getTopRespuestas = useCallback(async (category: string, question: string) => {
+    try {
+      const { data, error } = await supabase.rpc('get_question_responses_normalized', { category, question });
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.error('Error al obtener top de respuestas:', err);
+      return [];
+    }
+  }, []);
+
+  // Obtener top de respuestas por barrio para una pregunta (más detallado)
+  const getTopRespuestasPorBarrio = useCallback(async (category: string, question: string) => {
+    try {
+      const { data, error } = await supabase.rpc('get_question_responses_by_barrio', { category, question });
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.error('Error al obtener top de respuestas por barrio:', err);
+      return [];
+    }
+  }, []);
+
   return {
     // Estados
     categories,
@@ -305,16 +327,18 @@ export function useCombinedFiltersOptimizado() {
     combinedFilters,
     filterStats,
     statsLoading,
-  hasMore,
-  loadNextPage,
-    
+    hasMore,
+    loadNextPage,
+
     // Funciones
     loadQuestionsForCategory,
     getQuestionResponses,
     addFilter,
     removeFilter,
     clearFilters,
-  applyCombinedFilters
+    applyCombinedFilters,
+    getTopRespuestas,
+    getTopRespuestasPorBarrio
   };
 }
 
