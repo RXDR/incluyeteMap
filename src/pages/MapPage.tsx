@@ -1,4 +1,8 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
+// Warm-up: consulta rápida a Supabase para preparar la base de datos
+import { createClient } from '@supabase/supabase-js';
+// Configura tu URL y API KEY de Supabase
+const supabase = createClient('https://TU_URL.supabase.co', 'TU_API_KEY');
 import { useBarriosStats } from '../hooks/useBarriosStats';
 import TestMap from './TestMap';
 import LeftPanel from '../components/LeftPanel';
@@ -11,6 +15,20 @@ import DataVisualization from './DataVisualization';
 import '@fontsource/inter';
 
 const MapPage: React.FC = () => {
+  // Efecto de warm-up al cargar la página
+  useEffect(() => {
+  const warmup = async () => {
+    try {
+      await supabase
+        .from('survey_responses')
+        .select('id')
+        .limit(1);
+    } catch (e) {
+      // Silenciar error
+    }
+  };
+  warmup();
+}, []);
   const [activeTab, setActiveTab] = useState<'map' | 'visualization'>('map');
   const [combinedFilters, setCombinedFilters] = useState<CombinedFilter[]>([]);
   const [selectedMetric, setSelectedMetric] = useState<string>('');

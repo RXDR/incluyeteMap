@@ -38,14 +38,7 @@ const App = () => {
               <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Cargando página...</div>}>
                 <Routes>
                   <Route path="/" element={<Index />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/survey-manager" element={<SurveyDataManager />} />
-                  <Route path="/geoportal" element={<GeoportalInterface />} />
-                  <Route path="/barranquilla" element={<BarranquillaRealMap />} />
-                  <Route path="/barranquilla-choropleth" element={<BarranquillaChoroplethMap />} />
-                  <Route path="/barranquilla-sin-mapa" element={<BarranquillaChoroplethMapNoMap />} />
-                  <Route path="/data-management" element={<DataManagement />} />
-                  <Route path="/test" element={<MapPage />} />
+                  <Route path="/mapa" element={<MapPage />} />
                   <Route
                     path="/visualization"
                     element={

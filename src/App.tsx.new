@@ -45,7 +45,7 @@ const App = () => {
                   <Route path="/barranquilla-choropleth" element={<BarranquillaChoroplethMap />} />
                   <Route path="/barranquilla-sin-mapa" element={<BarranquillaChoroplethMapNoMap />} />
                   <Route path="/data-management" element={<DataManagement />} />
-                  <Route path="/test" element={<MapPage />} />
+                  <Route path="/mapa" element={<MapPage />} />
                   <Route
                     path="/visualization"
                     element={

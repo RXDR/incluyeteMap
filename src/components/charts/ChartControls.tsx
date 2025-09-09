@@ -69,13 +69,7 @@ const ChartControls: React.FC<ChartControlsProps> = ({
       </div>
 
       <div className="flex justify-end space-x-4 mt-4">
-        <button
-          className="bg-secondary hover:bg-secondary/80 text-secondary-foreground px-4 py-2 rounded text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          onClick={onDownloadData}
-          disabled={isLoading}
-        >
-          💾 Descargar Datos
-        </button>
+       
         <button
           className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           onClick={onExportChart}

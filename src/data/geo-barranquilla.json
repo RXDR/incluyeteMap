@@ -94588,6 +94588,50 @@
                 "localidad": "Metropolitana",
                 "pieza_urba": "Suroccidental 1, Suroriental"
             }
+        },
+          {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                 "coordinates": [
+                [
+                    [
+                        -74.858522,
+                        10.958604
+                    ],
+                    [
+                        -74.861054,
+                        10.95359
+                    ],
+                    [
+                        -74.854488,
+                        10.950346
+                    ],
+                    [
+                        -74.852257,
+                        10.952368
+                    ],
+                    [
+                        -74.85157,
+                        10.958435
+                    ],
+                    [
+                        -74.854102,
+                        10.961679
+                    ],
+                    [
+                        -74.858522,
+                        10.958604
+                    ]
+                ]
+            ]
+            },
+            "properties": {
+                "id": 0,
+                "nombre": "CARIBE VERDE",
+                "localidad": "Metropolitana",
+                "pieza_urba": "Suroccidental 1"
+            }
         }
     ]
 }
