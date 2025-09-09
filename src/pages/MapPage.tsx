@@ -90,18 +90,7 @@ const MapPage: React.FC = () => {
                   >
                     <span className="text-gray-300">{filter.questionText || filter.questionId}:</span>
                     <span>{filter.response}</span>
-                    <button
-                      onClick={() => {
-                        // Remove filter and trigger filtering
-                        const newFilters = combinedFilters.filter((_, i) => i !== index);
-                        handleCombinedFiltersChange(newFilters);
-                      }}
-                      className="ml-2 text-gray-400 hover:text-white transition-colors"
-                    >
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
+                   
                   </div>
                 ))}
 

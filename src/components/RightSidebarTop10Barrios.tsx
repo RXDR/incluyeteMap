@@ -48,7 +48,7 @@ const RightSidebarTop10Barrios: React.FC<RightSidebarTop10BarriosProps> = ({ dat
       color: theme === 'dark' ? '#fff' : '#111827',
       display: 'flex',
       flexDirection: 'column',
-      gap: 16,
+      gap: 1,
       fontFamily: 'Inter, sans-serif',
       marginBottom: 32 // <-- margen extra para que el último barrio se vea bien
     }}>
@@ -118,6 +118,7 @@ const RightSidebarTop10Barrios: React.FC<RightSidebarTop10BarriosProps> = ({ dat
               justifyContent: 'space-between',
               boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
               transition: 'border 0.2s',
+              paddingBottom: '12px' // <-- espacio extra para que el último barrio se vea bien
             }}
           >
             <span style={{ fontWeight: 500 }}>

@@ -52,55 +52,22 @@ export const FilteredPersonsTable: React.FC<FilteredPersonsTableProps> = ({ data
   return (
     <div className="overflow-x-auto">
       <div className="flex flex-wrap justify-between items-center mb-2 gap-2">
-        <button
-          className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-          onClick={handleExportExcel}
-        >
-          Exportar a Excel
-        </button>
+       
         {/* Selector de cantidad por página */}
-        <div className="flex items-center gap-2">
-          <label htmlFor="pageSize" className="text-sm font-medium text-gray-700 dark:text-gray-200">Registros por página:</label>
-          <select
-            id="pageSize"
-            value={pageSize}
-            onChange={e => onPageSizeChange && onPageSizeChange(Number(e.target.value))}
-            className="px-2 py-1 rounded border border-gray-300 text-black dark:text-black bg-white dark:bg-yellow-100"
-            style={{ minWidth: 80 }}
-          >
-            <option value={100}>100</option>
-            <option value={250}>250</option>
-            <option value={500}>500</option>
-            <option value={1000}>1000</option>
-          </select>
-        </div>
+     
         {/* Paginación visual */}
         {totalPages > 1 && (
           <div className="flex items-center gap-2">
             <button
-              className={`px-3 py-2 rounded-lg font-semibold transition-colors shadow-sm border
-                ${page === 0
-                  ? 'bg-gray-100 text-gray-700 border-gray-300 cursor-not-allowed'
-                  : 'bg-yellow-400 text-black border-yellow-500 hover:bg-yellow-500 hover:border-yellow-600'}
-                dark:${page === 0
-                  ? 'bg-gray-800 text-gray-300 border-gray-700 cursor-not-allowed'
-                  : 'bg-yellow-300 text-black border-yellow-400 hover:bg-yellow-400 hover:border-yellow-500'}
-              `}
+              className="px-3 py-2 rounded-lg font-semibold shadow-sm border border-gray-300 bg-white text-black hover:bg-gray-200 disabled:bg-gray-100 disabled:border-gray-300 disabled:text-black cursor-pointer"
               onClick={() => onPageChange && onPageChange(page - 1)}
               disabled={page === 0}
             >
               ← Anterior
             </button>
-            <span className="px-4 py-2 rounded text-sm font-medium bg-gray-100 text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-700">Página {page + 1} de {totalPages}</span>
+            <span className="px-4 py-2 rounded text-sm font-medium bg-white border border-gray-300 text-black">Página {page + 1} de {totalPages}</span>
             <button
-              className={`px-3 py-2 rounded-lg font-semibold transition-colors shadow-sm border
-                ${(page + 1 >= totalPages)
-                  ? 'bg-gray-100 text-gray-700 border-gray-300 cursor-not-allowed'
-                  : 'bg-yellow-400 text-black border-yellow-500 hover:bg-yellow-500 hover:border-yellow-600'}
-                dark:${(page + 1 >= totalPages)
-                  ? 'bg-gray-800 text-gray-300 border-gray-700 cursor-not-allowed'
-                  : 'bg-yellow-300 text-black border-yellow-400 hover:bg-yellow-400 hover:border-yellow-500'}
-              `}
+              className="px-3 py-2 rounded-lg font-semibold shadow-sm border border-gray-300 bg-white text-black hover:bg-gray-200 disabled:bg-gray-100 disabled:border-gray-300 disabled:text-black cursor-pointer"
               onClick={() => onPageChange && onPageChange(page + 1)}
               disabled={page + 1 >= totalPages}
             >

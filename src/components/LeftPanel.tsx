@@ -10,6 +10,7 @@ import ExcelUploaderModal from './ExcelUploaderModal';
 import ProcesarDatosModal from './ProcesarDatosModal';
 import { CombinedFilter } from '../hooks/useCombinedFilters';
 import { supabase } from '@/integrations/supabase/client';
+import ExportFilteredPersonsExcel from './ExportFilteredPersonsExcel';
 
 interface LeftPanelProps {
   toggleCombinedFilters: () => void;
@@ -167,15 +168,19 @@ const LeftPanel: React.FC<LeftPanelProps> = ({
                 onStatsChange={handleCombinedStatsChange}
               />
               {/* Botón para ver tabla de datos solo si filtros están listos y hay filtros activos */}
-              <button
-                className={`mt-4 px-4 py-2 rounded ${filtersReady && combinedFilters.length > 0 ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-400 text-gray-200 cursor-not-allowed'}`}
-                onClick={() => {
-                  if (filtersReady && combinedFilters.length > 0) setModalOpen(true);
-                }}
-                disabled={!filtersReady || combinedFilters.length === 0}
-              >
-                {filtersReady ? 'Ver tabla de datos' : 'Cargando filtros...'}
-              </button>
+              <div className="flex flex-col gap-2 mt-4">
+                <button
+                  className={`px-4 py-2 rounded font-semibold flex items-center justify-center gap-2 shadow ${filtersReady && combinedFilters.length > 0 ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-400 text-gray-200 cursor-not-allowed'}`}
+                  onClick={() => {
+                    if (filtersReady && combinedFilters.length > 0) setModalOpen(true);
+                  }}
+                  disabled={!filtersReady || combinedFilters.length === 0}
+                >
+                  <FiBarChart className="w-5 h-5" />
+                  {filtersReady ? 'Mostrar datos de la tabla' : 'Cargando filtros...'}
+                </button>
+                <ExportFilteredPersonsExcel combinedFilters={combinedFilters} />
+              </div>
               {/* Modal grande para la tabla de datos */}
               {modalOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-60">
@@ -183,9 +188,12 @@ const LeftPanel: React.FC<LeftPanelProps> = ({
                     <div className="flex justify-between items-center p-4 border-b">
                       <h2 className="text-xl font-bold">Tabla de Datos Filtrados</h2>
                       <button
-                        className="px-3 py-1 bg-red-500 text-white rounded"
+                        className="px-3 py-1 rounded-lg font-semibold border border-yellow-500 bg-yellow-400 text-black hover:bg-yellow-500 hover:border-yellow-600 transition-colors shadow-sm"
                         onClick={() => setModalOpen(false)}
-                      >Cerrar</button>
+                        title="Cerrar"
+                      >
+                        <span className="font-bold">✕</span> <span className="ml-1">Cerrar</span>
+                      </button>
                     </div>
                     <div className="flex-1 overflow-auto p-4">
                       {tableLoading ? (
@@ -194,35 +202,35 @@ const LeftPanel: React.FC<LeftPanelProps> = ({
                           <span className="text-gray-700">Cargando datos filtrados...</span>
                         </div>
                       ) : (
-                        <FilteredPersonsTable
-                          data={tableRows.map(row => {
-                            // Extraer los datos relevantes del objeto recibido
-                            const otros = row.responses_data?.OTROS || {};
-                            return {
-                              nombre: `${otros["PRIMER NOMBRE"] || ""} ${otros["SEGUNDO NOMBRE"] || ""} ${otros["PRIMER APELLIDO"] || ""} ${otros["SEGUNDO APELLIDO"] || ""}`.trim(),
-                              sexo: otros["¿Qué sexo le fue asignado al nacer en su certificado de nacimiento / en el certificado de nacimiento de la persona con discapacidad?"] || otros["¿Cuál es su identidad de género / la identidad de género de la persona con discapacidad actualmente?"] || "",
-                              direccion: row.address || "",
-                              celular: otros["Celular 1"] || "",
-                              barrio: row.barrio || "",
-                            };
-                          })}
-                        />
-                      )}
-                      {/* Paginación */}
-                      {filteredCount > PAGE_SIZE && (
-                        <div className="flex justify-center items-center gap-2 mt-2">
-                          <button
-                            className="px-2 py-1 bg-gray-200 rounded"
-                            onClick={() => setPage(p => Math.max(0, p - 1))}
-                            disabled={page === 0 || tableLoading}
-                          >Anterior</button>
-                          <span>Página {page + 1} de {Math.ceil(filteredCount / PAGE_SIZE)}</span>
-                          <button
-                            className="px-2 py-1 bg-gray-200 rounded"
-                            onClick={() => setPage(p => p + 1)}
-                            disabled={(page + 1) * PAGE_SIZE >= filteredCount || tableLoading}
-                          >Siguiente</button>
-                        </div>
+                        <>
+                          <FilteredPersonsTable
+                            data={tableRows.map(row => {
+                              // Extraer los datos relevantes del objeto recibido
+                              const otros = row.responses_data?.OTROS || {};
+                              return {
+                                nombre: `${otros["PRIMER NOMBRE"] || ""} ${otros["SEGUNDO NOMBRE"] || ""} ${otros["PRIMER APELLIDO"] || ""} ${otros["SEGUNDO APELLIDO"] || ""}`.trim(),
+                                sexo: otros["¿Qué sexo le fue asignado al nacer en su certificado de nacimiento / en el certificado de nacimiento de la persona con discapacidad?"] || otros["¿Cuál es su identidad de género / la identidad de género de la persona con discapacidad actualmente?"] || "",
+                                direccion: row.address || "",
+                                celular: otros["Celular 1"] || "",
+                                barrio: row.barrio || "",
+                              };
+                            })}
+                          />
+                          {/* Paginación visual */}
+                          <div className="flex justify-center items-center gap-2 mt-4">
+                            <button
+                              className="px-3 py-1 rounded border border-gray-300 bg-white text-black hover:bg-gray-100 disabled:opacity-50"
+                              onClick={() => setPage(p => Math.max(0, p - 1))}
+                              disabled={page === 0 || tableLoading}
+                            >Anterior</button>
+                            <span className="text-black text-sm font-medium">Página {page + 1} de {Math.max(1, Math.ceil(filteredCount / PAGE_SIZE))}</span>
+                            <button
+                              className="px-3 py-1 rounded border border-gray-300 bg-white text-black  hover:bg-gray-100 disabled:opacity-50"
+                              onClick={() => setPage(p => p + 1)}
+                              disabled={(page + 1) * PAGE_SIZE >= filteredCount || tableLoading}
+                            >Siguiente</button>
+                          </div>
+                        </>
                       )}
                     </div>
                   </div>
@@ -289,23 +297,8 @@ const LeftPanel: React.FC<LeftPanelProps> = ({
                   onUploadComplete={handleUploadComplete}
                 />
                 
-                <button
-                  onClick={() => setIsProcesarModalOpen(true)}
-                  className={`flex items-center space-x-2 text-sm px-3 py-2 rounded transition-colors ${
-                    isProcesarModalOpen
-                      ? 'bg-blue-600 text-white'
-                      : theme === 'dark'
-                        ? 'bg-gray-700 text-gray-300 hover:text-white'
-                        : 'bg-gray-100 text-gray-600 hover:text-gray-900 hover:bg-gray-200'
-                  }`}
-                  disabled={loadingProcesar}
-                >
-                  <FiBarChart className="w-4 h-4" />
-                  <span>Procesar Datos</span>
-                  {loadingProcesar && (
-                    <span className="ml-2 animate-spin">🔄</span>
-                  )}
-                </button>
+               
+               
               
               </div>
 
