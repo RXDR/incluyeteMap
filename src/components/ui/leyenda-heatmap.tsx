@@ -3,44 +3,30 @@ import { cn } from '@/lib/utils';
 
 interface LeyendaHeatmapProps {
   className?: string;
-  mode?: 'income' | 'combined';
   title?: string;
+  steps: Array<{
+    value: number;
+    label: string;
+    color: string;
+    opacity: number;
+  }>;
 }
 
-/**
- * Componente de leyenda para el mapa de calor
- * Muestra la escala de colores según el porcentaje de coincidencia
- * Basado en la imagen de leyenda proporcionada
- */
-export function LeyendaHeatmap({ className, mode = 'combined', title = 'Leyenda del Mapa' }: LeyendaHeatmapProps) {
-  // Rangos según el modo
-  const rangos = mode === 'income' ? [
-    { min: 0, max: 25, color: '#cc3333', label: 'Sin ingresos', description: 'Población sin ingresos' },
-    { min: 25, max: 50, color: '#b30000', label: 'Ingresos bajos', description: '$1 - $300.000' },
-    { min: 50, max: 75, color: '#990000', label: 'Ingresos medios', description: '$300.001 - $1.000.000' },
-    { min: 75, max: 100, color: '#800000', label: 'Ingresos altos', description: '$1.000.001 - $2.000.000' },
-    { min: 100, max: null, color: '#4d0000', label: 'Ingresos muy altos', description: 'Más de $2.000.000' },
-  ] : [
-    { min: 0, max: 25, color: '#cc3333', label: '0 - 25%', description: 'Coincidencia Baja' },
-    { min: 25, max: 50, color: '#b30000', label: '25 - 50%', description: 'Coincidencia Media-Baja' },
-    { min: 50, max: 75, color: '#990000', label: '50 - 75%', description: 'Coincidencia Media' },
-    { min: 75, max: 100, color: '#800000', label: '75 - 100%', description: 'Coincidencia Alta' },
-    { min: 100, max: null, color: '#4d0000', label: '100%', description: 'Coincidencia Total' },
-  ];
 
+export function LeyendaHeatmap({ className, title = 'Leyenda del Mapa', steps }: LeyendaHeatmapProps) {
   return (
-    <div className={cn('p-3 bg-white rounded-lg shadow-md', className)}>
-      <h3 className="text-sm font-medium mb-2">{title}</h3>
+    <div className={cn('p-3 bg-white rounded-lg shadow-md')}>
+      <h3 className="text-sm text-gray-900 font-medium mb-2">{title}</h3>
       <div className="space-y-2">
-        {rangos.map((rango) => (
-          <div key={rango.label} className="flex items-center gap-2">
-            <div 
-              className="w-4 h-4 rounded" 
-              style={{ backgroundColor: rango.color }}
+        {steps.map((step) => (
+          <div key={step.label} className="flex items-center gap-2">
+            <div
+              className="w-4 h-4 rounded"
+              style={{ backgroundColor: step.color, opacity: step.opacity }}
             />
             <div className="flex flex-col">
-              <span className="text-xs font-medium text-gray-900">{rango.label}</span>
-              <span className="text-xs text-gray-500">{rango.description}</span>
+              <span className="text-xs font-medium text-gray-900">{step.label} - Coincidencia</span>
+            
             </div>
           </div>
         ))}

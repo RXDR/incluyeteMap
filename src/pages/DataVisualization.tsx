@@ -47,8 +47,6 @@ const DataVisualization: React.FC<DataVisualizationProps> = ({ data: initialData
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(100);
   const [totalRows, setTotalRows] = useState(0);
-  // Estado para el buscador
-  const [searchTerm, setSearchTerm] = useState('');
 
   const data = location.state?.data || initialData || [];
   const totals = location.state?.totals;
@@ -361,10 +359,7 @@ const DataVisualization: React.FC<DataVisualizationProps> = ({ data: initialData
               className={`px-4 py-2 rounded-lg font-semibold ${activeTab === 'graficos' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
               onClick={() => setActiveTab('graficos')}
             >Gráficos</button>
-            <button
-              className={`px-4 py-2 rounded-lg font-semibold ${activeTab === 'tabla' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-              onClick={() => setActiveTab('tabla')}
-            >Tabla</button>
+           
           </div>
           {/* Filtros activos visuales */}
           {activeFilters && activeFilters.length > 0 && (
@@ -449,58 +444,7 @@ const DataVisualization: React.FC<DataVisualizationProps> = ({ data: initialData
               </div>
             </>
           )}
-          {activeTab === 'tabla' && (
-            <div>
-              {loadingPersons ? (
-                <div className="text-center py-8 text-gray-500">Cargando personas...</div>
-              ) : (
-                filteredPersons.length > 0
-                  ? <>
-                      {/* Buscador */}
-                      <div className="flex justify-end mb-4">
-                        <input
-                          type="text"
-                          placeholder="Buscar por nombre, documento o dirección..."
-                          className="border rounded px-3 py-2 w-72 text-black bg-white shadow"
-                          value={searchTerm}
-                          onChange={e => setSearchTerm(e.target.value)}
-                        />
-                      </div>
-                      <FilteredPersonsTable persons={filteredPersons.filter(p => {
-                        const nombre = [p.responses_data?.OTROS?.['PRIMER NOMBRE'], p.responses_data?.OTROS?.['SEGUNDO NOMBRE'], p.responses_data?.OTROS?.['PRIMER APELLIDO'], p.responses_data?.OTROS?.['SEGUNDO APELLIDO']].filter(Boolean).join(' ');
-                        const documento = p.responses_data?.OTROS?.['Número de documento de la persona con discapacidad'] || '';
-                        const direccion = p.address || '';
-                        const term = searchTerm.toLowerCase();
-                        return nombre.toLowerCase().includes(term) || documento.toLowerCase().includes(term) || direccion.toLowerCase().includes(term);
-                      })} />
-                      <div className="flex justify-center items-center gap-2 mt-4">
-                        <button
-                          className="px-4 py-2 rounded bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition"
-                          disabled={page === 1}
-                          onClick={() => setPage(page - 1)}
-                        >Anterior</button>
-                        <span className="px-3 py-2 bg-white rounded shadow text-black font-semibold">Página {page}</span>
-                        <button
-                          className="px-4 py-2 rounded bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition"
-                          disabled={filteredPersons.length < limit}
-                          onClick={() => setPage(page + 1)}
-                        >Siguiente</button>
-                        <select
-                          className="ml-4 px-2 py-1 rounded border text-black bg-white shadow"
-                          value={limit}
-                          onChange={e => { setLimit(Number(e.target.value)); setPage(1); }}
-                        >
-                          <option value={50}>50</option>
-                          <option value={100}>100</option>
-                          <option value={250}>250</option>
-                          <option value={500}>500</option>
-                        </select>
-                      </div>
-                    </>
-                  : <div className="text-center py-8 text-gray-500">No hay personas que cumplan con el filtro.</div>
-              )}
-            </div>
-          )}
+         
         </div>
       </div>
     </div>

@@ -1,0 +1,16 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Inspect survey_responses table",
+			"type": "shell",
+			"command": "psql",
+			"args": [
+				"-c",
+				"\"\\d+ survey_responses\""
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		}
+	]
+}

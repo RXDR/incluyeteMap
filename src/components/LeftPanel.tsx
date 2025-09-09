@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
+import { FilteredPersonsTable } from './FilteredPersonsTable';
+import { useEffect } from 'react';
+
 import { FiBarChart, FiFileText, FiChevronDown, FiChevronRight, FiTrendingUp, FiDollarSign } from 'react-icons/fi';
 import CombinedFiltersPanel from '../components/CombinedFiltersPanel';
 import { useTheme } from '@/context/ThemeContext';
 import IncomeAnalysis from './IncomeAnalysis';
 import ExcelUploaderModal from './ExcelUploaderModal';
+import ProcesarDatosModal from './ProcesarDatosModal';
 import { CombinedFilter } from '../hooks/useCombinedFilters';
+import { supabase } from '@/integrations/supabase/client';
 
 interface LeftPanelProps {
   toggleCombinedFilters: () => void;
@@ -43,6 +48,18 @@ const LeftPanel: React.FC<LeftPanelProps> = ({
   className
 }) => {
   const [isUploaderModalOpen, setIsUploaderModalOpen] = useState(false);
+  const [isProcesarModalOpen, setIsProcesarModalOpen] = useState(false);
+  const [loadingProcesar, setLoadingProcesar] = useState(false);
+  // Backend-driven filter readiness and table data
+  const [filtersReady, setFiltersReady] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [tableLoading, setTableLoading] = useState(false);
+  const [globalLoading, setGlobalLoading] = useState(false);
+  const [tableRows, setTableRows] = useState<any[]>([]);
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 1000;
+  // Track total filtered count for pagination
+  const [filteredCount, setFilteredCount] = useState(0);
   const { theme } = useTheme();
 
   const handleUploadComplete = (stats: any) => {
@@ -52,11 +69,78 @@ const LeftPanel: React.FC<LeftPanelProps> = ({
     }
     setIsUploaderModalOpen(false);
   };
+  // Simulate backend filter queries (replace with your actual RPC calls)
+  useEffect(() => {
+    async function fetchFilterOptions() {
+      setFiltersReady(false);
+      setGlobalLoading(true);
+      // Simulate backend filter queries
+      console.log('🔄 Consultando opciones y conteos de filtros en backend...');
+      // TODO: Replace with actual Supabase RPC calls for filter options/counts
+      await new Promise(res => setTimeout(res, 800));
+      setFiltersReady(true);
+      setGlobalLoading(false);
+      console.log('✅ Opciones y conteos de filtros listos (backend)');
+    }
+    fetchFilterOptions();
+  }, [combinedFilters]);
+
+  // Fetch paginated filtered data and total count from backend when table is shown
+  useEffect(() => {
+    async function fetchTableData() {
+      if (!modalOpen || !filtersReady || combinedFilters.length === 0) return;
+      setTableLoading(true);
+      setGlobalLoading(true);
+      console.log('🔄 Consultando datos filtrados en backend (página', page + 1, ')...');
+      try {
+        // Consulta los datos paginados
+        const { data, error } = await supabase.rpc('get_filtered_persons_with_coords', {
+          filters: combinedFilters,
+          limit_rows: PAGE_SIZE,
+          offset_rows: page * PAGE_SIZE
+        });
+        // Consulta el total de registros filtrados
+        const { data: totalData, error: errorCount } = await supabase.rpc('count_filtered_persons_with_coords', {
+          filters: combinedFilters
+        });
+        if (error) {
+          console.error('❌ Error consultando datos filtrados:', error.message);
+          setTableRows([]);
+        } else {
+          setTableRows(data || []);
+          console.log('✅ Datos filtrados recibidos (backend):', data ? data.length : 0);
+        }
+        if (errorCount) {
+          console.error('❌ Error consultando total filtrado:', errorCount.message);
+          setFilteredCount(0);
+        } else {
+          setFilteredCount(totalData ?? 0);
+        }
+      } catch (err) {
+        console.error('❌ Error inesperado:', err);
+        setTableRows([]);
+        setFilteredCount(0);
+      }
+      setTableLoading(false);
+      setGlobalLoading(false);
+    }
+    fetchTableData();
+  }, [modalOpen, filtersReady, combinedFilters, page]);
+
   return (
-    <div className={`w-full ${className}`}>
-      <div className="space-y-6">
-        {/* Filtros */}
-        <div className="space-y-4">
+    <>
+      {globalLoading && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black bg-opacity-40">
+          <div className="flex flex-col items-center justify-center">
+            <span className="animate-spin text-yellow-500 text-5xl mb-4">⏳</span>
+            <span className="text-xl font-semibold text-white">Cargando datos, por favor espere...</span>
+          </div>
+        </div>
+      )}
+      <div className={`w-full ${className}`}>
+        <div className="space-y-6">
+  {/* Filtros */}
+  <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h4 className="font-semibold">Filtros Combinados</h4>
             <div className="flex space-x-2">
@@ -82,8 +166,68 @@ const LeftPanel: React.FC<LeftPanelProps> = ({
                 onFiltersChange={handleCombinedFiltersChange}
                 onStatsChange={handleCombinedStatsChange}
               />
-              
-
+              {/* Botón para ver tabla de datos solo si filtros están listos y hay filtros activos */}
+              <button
+                className={`mt-4 px-4 py-2 rounded ${filtersReady && combinedFilters.length > 0 ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-400 text-gray-200 cursor-not-allowed'}`}
+                onClick={() => {
+                  if (filtersReady && combinedFilters.length > 0) setModalOpen(true);
+                }}
+                disabled={!filtersReady || combinedFilters.length === 0}
+              >
+                {filtersReady ? 'Ver tabla de datos' : 'Cargando filtros...'}
+              </button>
+              {/* Modal grande para la tabla de datos */}
+              {modalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-60">
+                  <div className="bg-white rounded-lg shadow-lg w-[90vw] h-[80vh] flex flex-col z-[101]">
+                    <div className="flex justify-between items-center p-4 border-b">
+                      <h2 className="text-xl font-bold">Tabla de Datos Filtrados</h2>
+                      <button
+                        className="px-3 py-1 bg-red-500 text-white rounded"
+                        onClick={() => setModalOpen(false)}
+                      >Cerrar</button>
+                    </div>
+                    <div className="flex-1 overflow-auto p-4">
+                      {tableLoading ? (
+                        <div className="flex flex-col items-center justify-center py-8 text-lg">
+                          <span className="animate-spin text-blue-600 text-3xl mb-2">⏳</span>
+                          <span className="text-gray-700">Cargando datos filtrados...</span>
+                        </div>
+                      ) : (
+                        <FilteredPersonsTable
+                          data={tableRows.map(row => {
+                            // Extraer los datos relevantes del objeto recibido
+                            const otros = row.responses_data?.OTROS || {};
+                            return {
+                              nombre: `${otros["PRIMER NOMBRE"] || ""} ${otros["SEGUNDO NOMBRE"] || ""} ${otros["PRIMER APELLIDO"] || ""} ${otros["SEGUNDO APELLIDO"] || ""}`.trim(),
+                              sexo: otros["¿Qué sexo le fue asignado al nacer en su certificado de nacimiento / en el certificado de nacimiento de la persona con discapacidad?"] || otros["¿Cuál es su identidad de género / la identidad de género de la persona con discapacidad actualmente?"] || "",
+                              direccion: row.address || "",
+                              celular: otros["Celular 1"] || "",
+                              barrio: row.barrio || "",
+                            };
+                          })}
+                        />
+                      )}
+                      {/* Paginación */}
+                      {filteredCount > PAGE_SIZE && (
+                        <div className="flex justify-center items-center gap-2 mt-2">
+                          <button
+                            className="px-2 py-1 bg-gray-200 rounded"
+                            onClick={() => setPage(p => Math.max(0, p - 1))}
+                            disabled={page === 0 || tableLoading}
+                          >Anterior</button>
+                          <span>Página {page + 1} de {Math.ceil(filteredCount / PAGE_SIZE)}</span>
+                          <button
+                            className="px-2 py-1 bg-gray-200 rounded"
+                            onClick={() => setPage(p => p + 1)}
+                            disabled={(page + 1) * PAGE_SIZE >= filteredCount || tableLoading}
+                          >Siguiente</button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </>
           ) : (
             <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'} rounded-lg p-3`}>
@@ -146,18 +290,23 @@ const LeftPanel: React.FC<LeftPanelProps> = ({
                 />
                 
                 <button
-                  onClick={() => setShowDataVisualizer(!showDataVisualizer)}
+                  onClick={() => setIsProcesarModalOpen(true)}
                   className={`flex items-center space-x-2 text-sm px-3 py-2 rounded transition-colors ${
-                    showDataVisualizer 
-                      ? 'bg-blue-600 text-white' 
+                    isProcesarModalOpen
+                      ? 'bg-blue-600 text-white'
                       : theme === 'dark'
                         ? 'bg-gray-700 text-gray-300 hover:text-white'
                         : 'bg-gray-100 text-gray-600 hover:text-gray-900 hover:bg-gray-200'
                   }`}
+                  disabled={loadingProcesar}
                 >
                   <FiBarChart className="w-4 h-4" />
-                  <span>Visualizar Datos</span>
+                  <span>Procesar Datos</span>
+                  {loadingProcesar && (
+                    <span className="ml-2 animate-spin">🔄</span>
+                  )}
                 </button>
+              
               </div>
 
               {/* Estadísticas de subida */}
@@ -198,6 +347,7 @@ const LeftPanel: React.FC<LeftPanelProps> = ({
         </div>
       </div>
     </div>
+    </>
   );
 };
 

@@ -38,17 +38,7 @@ const ChartControls: React.FC<ChartControlsProps> = ({
     <div className="flex flex-col gap-4 p-4 bg-card rounded-lg mb-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Tipo de Vista */}
-        <div className="space-y-2">
-          <label className="text-muted-foreground text-sm block">Vista de Datos:</label>
-          <select
-            value={dataView}
-            onChange={(e) => onDataViewChange(e.target.value as 'top10' | 'all')}
-            className="w-full bg-secondary text-secondary-foreground rounded px-3 py-2 text-sm border border-border focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="top10">Top 10 Barrios</option>
-            <option value="all">Total Global (Todos los Barrios)</option>
-          </select>
-        </div>
+        
 
         {/* Tipo de Gráfico */}
         <div className="space-y-2">
@@ -60,8 +50,7 @@ const ChartControls: React.FC<ChartControlsProps> = ({
           >
             <option value="bar">Barras</option>
             <option value="pie">Circular</option>
-            <option value="line">Líneas</option>
-            <option value="area">Área</option>
+            
           </select>
         </div>
 

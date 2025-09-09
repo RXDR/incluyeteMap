@@ -135,15 +135,16 @@ function processDataRow(
 
   // Procesar cada columna
   mappings.forEach((mapping, colIndex) => {
-    const cellValue = row[colIndex]?.toString().trim() || '';
-    
+    let cellValue = row[colIndex]?.toString().trim() || '';
     if (!cellValue) return; // Ignorar celdas vacías
-    
+    // Normalizar a mayúsculas
+    cellValue = cellValue.toUpperCase();
+
     // Verificar si es una columna especial
     const specialKey = Object.keys(SPECIAL_COLUMNS).find(key => 
       mapping.question.toUpperCase().includes(key)
     );
-    
+
     if (specialKey) {
       handleSpecialColumn(processedRow, SPECIAL_COLUMNS[specialKey as keyof typeof SPECIAL_COLUMNS], cellValue);
     } else {
@@ -157,13 +158,51 @@ function processDataRow(
         }
         processedRow.responses[mapping.category][mapping.question || `col_${colIndex}`] = cellValue;
       }
-      
+
       // Actualizar distribución de categorías
       if (!processedRow.metadata.category_distribution[mapping.category]) {
         processedRow.metadata.category_distribution[mapping.category] = '';
       }
     }
   });
+
+
+  // --- MEJORA DE MAPEO: Copiar datos clave a sociodemographic ---
+  // Si existen datos en OTROS, agregarlos a sociodemographic
+  const otros = processedRow.responses['OTROS'] || {};
+  const camposClave = [
+    'PRIMER NOMBRE',
+    'SEGUNDO NOMBRE',
+    'PRIMER APELLIDO',
+    'SEGUNDO APELLIDO',
+    'Número de documento de la persona con discapacidad',
+    'Tipo de documento de la persona con discapacidad',
+    'Celular 1',
+    'Celular 2',
+    '¿Qué sexo le fue asignado al nacer en su certificado de nacimiento / en el certificado de nacimiento de la persona con discapacidad?',
+    '¿Cuál es su identidad de género / la identidad de género de la persona con discapacidad actualmente?'
+  ];
+  camposClave.forEach(campo => {
+    if (otros[campo]) {
+      processedRow.sociodemographic[campo] = otros[campo];
+    }
+  });
+
+  // Copiar dirección y barrio desde location
+  if (processedRow.location.address) {
+    processedRow.sociodemographic['Dirección'] = processedRow.location.address;
+  }
+  if (processedRow.location.barrio) {
+    processedRow.sociodemographic['Barrio'] = processedRow.location.barrio;
+  }
+  // Copiar localidad
+  if (processedRow.location.localidad) {
+    processedRow.sociodemographic['Localidad'] = processedRow.location.localidad;
+  }
+  // Copiar estrato
+  if (processedRow.metadata.stratum) {
+    processedRow.sociodemographic['Estrato'] = processedRow.metadata.stratum;
+  }
 
   // Validar que la fila tenga datos mínimos
   const hasData = Object.keys(processedRow.sociodemographic).length > 0 || 

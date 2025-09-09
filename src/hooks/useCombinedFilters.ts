@@ -178,7 +178,7 @@ export const useCombinedFilters = () => {
 
         console.log('🔄 Cargando categorías desde la base de datos...');
 
-        const { data, error } = await supabase.rpc('get_available_categoriess');
+        const { data, error } = await supabase.rpc('get_available_categories');
 
         if (error) {
             console.error('❌ Error al cargar categorías:', error);
@@ -187,7 +187,7 @@ export const useCombinedFilters = () => {
         }
 
         if (data && data.length > 0) {
-            const categoryNames = data.map((item) => item.category);
+            const categoryNames = data; // data ya es un array de strings
             setCategories(categoryNames);
             console.log('✅ Categorías cargadas:', categoryNames);
         } else {
@@ -229,19 +229,20 @@ export const useCombinedFilters = () => {
         }
 
         if (data && data.length > 0) {
-            const categoryQuestions = data.map((item) => ({
-                category,
-                question_id: item.question_id,
-                question_text: item.question_text,
-                response_count: item.response_count
-            }));
+      // Si data es un array de strings, mapear a objetos
+      const categoryQuestions = data.map((questionText, idx) => ({
+        category,
+        question_id: questionText,
+        question_text: questionText,
+        response_count: 0 // Si no tienes conteo, pon 0 o null
+      }));
 
-            setQuestionsByCategory((prev) => ({
-                ...prev,
-                [category]: categoryQuestions
-            }));
+      setQuestionsByCategory((prev) => ({
+        ...prev,
+        [category]: categoryQuestions
+      }));
 
-            console.log(`✅ Preguntas cargadas para ${category}: ${categoryQuestions.length}`);
+      console.log(`✅ Preguntas cargadas para ${category}: ${categoryQuestions.length}`);
         } else {
             console.warn(`⚠️ No se encontraron preguntas para la categoría ${category}`);
             setQuestionsByCategory((prev) => ({

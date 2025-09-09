@@ -30,13 +30,7 @@ const TestMap: React.FC<TestMapProps> = ({ combinedStats, selectedMetric, showHe
   const [hoveredFeature, setHoveredFeature] = useState<any>(null);
   const [tooltipPos, setTooltipPos] = useState<{x: number, y: number} | null>(null);
 
-  // Calcular el máximo de respuestas para ajustar opacidad
-  const maxEncuestas = incomeData
-    ? Math.max(...incomeData.map(d => d.total_encuestas))
-    : combinedStats && combinedStats.length > 0
-      ? Math.max(...combinedStats.map(d => d.total_encuestas || 0))
-      : 1;
-
+  // Calcular el máximo matches_count para ajustar color y opacidad
   const maxMatchesCount = incomeData
     ? Math.max(...incomeData.map(d => d.matches_count))
     : combinedStats && combinedStats.length > 0
@@ -50,19 +44,20 @@ const TestMap: React.FC<TestMapProps> = ({ combinedStats, selectedMetric, showHe
       let totalEncuestas = 0;
       let score = 0;
       let matchesCount = 0;
+      let matchPercentage = 0;
 
-      // Si hay datos de ingresos, usarlos, sino usar stats combinados
+      // Usar datos de ingresos si existen, sino stats combinados
       if (incomeData) {
         const incomeStats = incomeData.find(stat => stat.barrio.trim().toLowerCase() === nombre);
         if (incomeStats && incomeStats.matches_count > 0) {
-          score = incomeStats.match_percentage;
+          score = incomeStats.matches_count;
           properties.score = score;
-          properties.intensity_score = incomeStats.intensity_score;
+          properties.intensity_score = score; // El color depende del matches_count
           totalEncuestas = incomeStats.total_encuestas;
           matchesCount = incomeStats.matches_count;
           properties.total_encuestas = totalEncuestas;
           properties.matches_count = matchesCount;
-          // Solo establecer opacidad si hay matches
+          // Opacidad proporcional al matches_count
           properties.fill_opacity = maxMatchesCount > 0 ? 0.5 + 0.5 * (matchesCount / maxMatchesCount) : 0.7;
         } else {
           properties.matches_count = 0;
@@ -70,14 +65,14 @@ const TestMap: React.FC<TestMapProps> = ({ combinedStats, selectedMetric, showHe
       } else {
         const barrioStats = combinedStats?.find(stat => stat.barrio.trim().toLowerCase() === nombre);
         if (barrioStats && barrioStats.matches_count > 0) {
-          score = barrioStats.match_percentage;
+          score = barrioStats.matches_count;
           properties.score = score;
-          properties.intensity_score = score; // Usar el score como intensity_score para el color
+          properties.intensity_score = score; // El color depende del matches_count
           totalEncuestas = barrioStats.total_encuestas;
           matchesCount = barrioStats.matches_count;
           properties.total_encuestas = totalEncuestas;
           properties.matches_count = matchesCount;
-          // Solo establecer opacidad si hay matches
+          // Opacidad proporcional al matches_count
           properties.fill_opacity = maxMatchesCount > 0 ? 0.5 + 0.5 * (matchesCount / maxMatchesCount) : 0.7;
         } else {
           properties.matches_count = 0;
@@ -159,10 +154,10 @@ const TestMap: React.FC<TestMapProps> = ({ combinedStats, selectedMetric, showHe
             ['linear'],
             ['get', 'intensity_score'],
               0, '#cc3333',
-            25, '#b30000',
-            50, '#990000',
-            75, '#800000',
-            100, '#4d0000'
+              Math.max(1, Math.floor(maxMatchesCount * 0.25)), '#b30000',
+              Math.max(1, Math.floor(maxMatchesCount * 0.5)), '#990000',
+              Math.max(1, Math.floor(maxMatchesCount * 0.75)), '#800000',
+              maxMatchesCount, '#4d0000'
           ],
           'fill-opacity': ['get', 'fill_opacity']
         },
@@ -237,9 +232,40 @@ const TestMap: React.FC<TestMapProps> = ({ combinedStats, selectedMetric, showHe
       {(combinedStats.length > 0 || incomeData) && (
         <>
           <div className="absolute top-4 left-4 z-10">
-            <LeyendaHeatmap 
-              mode={incomeData ? 'income' : 'combined'}
-              title={incomeData ? 'Análisis de Ingresos' : 'Coincidencias de Filtros'}
+            <LeyendaHeatmap
+              title="Personas que cumplen con el filtro"
+              steps={[
+                {
+                  value: Math.max(1, Math.floor(maxMatchesCount * 0.25)),
+                  label: '0 - 25%',
+                  color: '#cc3333',
+                  opacity: maxMatchesCount > 0 ? 0.5 + 0.5 * (Math.max(1, Math.floor(maxMatchesCount * 0.25)) / maxMatchesCount) : 0.7
+                },
+                {
+                  value: Math.max(1, Math.floor(maxMatchesCount * 0.5)),
+                  label: '25 - 50%',
+                  color: '#b30000',
+                  opacity: maxMatchesCount > 0 ? 0.5 + 0.5 * (Math.max(1, Math.floor(maxMatchesCount * 0.5)) / maxMatchesCount) : 0.7
+                },
+                {
+                  value: Math.max(1, Math.floor(maxMatchesCount * 0.75)),
+                  label: '50 - 75%',
+                  color: '#990000',
+                  opacity: maxMatchesCount > 0 ? 0.5 + 0.5 * (Math.max(1, Math.floor(maxMatchesCount * 0.75)) / maxMatchesCount) : 0.7
+                },
+                {
+                  value: maxMatchesCount,
+                  label: '75 - 100%',
+                  color: '#800000',
+                  opacity: 1
+                },
+                {
+                  value: maxMatchesCount,
+                  label: '100%',
+                  color: '#4d0000',
+                  opacity: 1
+                }
+              ]}
             />
           </div>
         </>
@@ -266,7 +292,6 @@ const TestMap: React.FC<TestMapProps> = ({ combinedStats, selectedMetric, showHe
           <div style={{fontWeight: 700, fontSize: 16, marginBottom: 4}}>{hoveredFeature.nombre || ''}</div>
           <div><b>Localidad:</b> {hoveredFeature.localidad || ''}</div>
           <div><b>Pieza urbana:</b> {hoveredFeature.pieza_urba || ''}</div>
-          <div><b>Coincidencia:</b> {hoveredFeature.score !== undefined ? hoveredFeature.score.toFixed(2) + '%' : ''}</div>
           <div><b>Personas que cumplen con el filtro:</b> {hoveredFeature.matches_count !== undefined ? hoveredFeature.matches_count : 'Sin respuestas'}</div>
           <div><b>Total de encuestas:</b> {hoveredFeature.total_encuestas !== undefined ? hoveredFeature.total_encuestas : 'Sin respuestas'}</div>
         </div>

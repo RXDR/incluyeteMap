@@ -1,3 +1,4 @@
+
 DROP FUNCTION IF EXISTS public.get_filtered_persons_with_coords(jsonb[], integer, integer);
 
 CREATE OR REPLACE FUNCTION public.get_filtered_persons_with_coords(
@@ -13,6 +14,7 @@ RETURNS TABLE (
   x numeric,
   y numeric,
   metadata jsonb,
+  sociodemographic_data jsonb,
   responses_data jsonb
 ) AS $$
 DECLARE
@@ -25,12 +27,21 @@ BEGIN
 
   -- Construir el WHERE dinámico (AND entre todos los filtros)
   FOREACH filtro IN ARRAY filters LOOP
-    where_sql := where_sql || format(
-      ' AND (responses_data->%L->>%L = %L)',
-      filtro->>'category',
-      filtro->>'questionId',
-      filtro->>'response'
-    );
+    -- Si el filtro es para sociodemographic_data (no tiene category o category es null/vacío)
+    IF filtro ? 'category' AND (filtro->>'category' IS NOT NULL AND filtro->>'category' != '') THEN
+      where_sql := where_sql || format(
+        ' AND (responses_data->%L->>%L = %L)',
+        filtro->>'category',
+        filtro->>'questionId',
+        filtro->>'response'
+      );
+    ELSE
+      where_sql := where_sql || format(
+        ' AND (sociodemographic_data->>%L = %L)',
+        filtro->>'questionId',
+        filtro->>'response'
+      );
+    END IF;
   END LOOP;
 
   RETURN QUERY EXECUTE
@@ -42,6 +53,7 @@ BEGIN
       (location_data->''coordinates''->>''x'')::numeric as x,
       (location_data->''coordinates''->>''y'')::numeric as y,
       metadata,
+      sociodemographic_data,
       responses_data
     FROM survey_responses
     WHERE ' || where_sql || '

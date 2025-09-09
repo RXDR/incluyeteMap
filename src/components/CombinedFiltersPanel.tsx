@@ -26,6 +26,9 @@ export default function CombinedFiltersPanel({ onFiltersChange, onStatsChange }:
     applyCombinedFilters
   } = useCombinedFilters();
 
+  // Track last removed filter for radio clearing
+  const [lastRemovedQuestionId, setLastRemovedQuestionId] = useState<string | null>(null);
+
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [questionResponses, setQuestionResponses] = useState<any[]>([]);
@@ -49,7 +52,8 @@ export default function CombinedFiltersPanel({ onFiltersChange, onStatsChange }:
     if (searchTerm) {
       // Filtrar por término de búsqueda
       return categories.filter(cat => 
-        cat.toLowerCase().includes(searchTerm.toLowerCase())
+        typeof cat === 'string' &&
+        cat.trim().toLowerCase().includes(searchTerm.trim().toLowerCase())
       );
     }
     
@@ -110,7 +114,13 @@ export default function CombinedFiltersPanel({ onFiltersChange, onStatsChange }:
   };
 
   const handleRemoveFilter = (index: number) => {
+    // Get the questionId of the filter being removed
+    const filter = combinedFilters[index];
     removeFilter(index);
+    if (filter && selectedQuestion === filter.questionId) {
+      setSelectedQuestion(null);
+      setLastRemovedQuestionId(filter.questionId);
+    }
   };
 
   const handleClearFilters = () => {
@@ -225,16 +235,7 @@ export default function CombinedFiltersPanel({ onFiltersChange, onStatsChange }:
           <span className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
             {filteredCategories.length} de {categories.length} categorías
           </span>
-          <button
-            onClick={() => setShowAllCategories(!showAllCategories)}
-            className={`underline ${
-              theme === 'dark' 
-                ? 'text-blue-400 hover:text-blue-300' 
-                : 'text-blue-600 hover:text-blue-700'
-            }`}
-          >
-            {showAllCategories ? 'Mostrar solo activas' : 'Mostrar todas'}
-          </button>
+          
         </div>
       </div>
 

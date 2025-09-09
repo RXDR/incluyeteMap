@@ -80,13 +80,13 @@ const MapPage: React.FC = () => {
             </div>
           </div>
         {combinedFilters.length > 0 && (
-          <div className="border-t border-gray-700">
-            <div className="p-3">
-              <div className="flex items-center gap-2 flex-wrap">
+          <div className="border-t border-gray-700 z-0">
+            <div className="p-3  text-white text-sm flex items-center justify-between z-0">
+              <div className="flex items-center gap-2 flex-wrap z-0">
                 {combinedFilters.map((filter, index) => (
                   <div
                     key={index}
-                    className="inline-flex items-center gap-2 bg-gray-700 text-white text-sm px-3 py-1.5 rounded-full"
+                    className="inline-flex items-center gap-2 bg-gray-700 text-white text-sm px-3 py-1.5 rounded-full "
                   >
                     <span className="text-gray-300">{filter.questionText || filter.questionId}:</span>
                     <span>{filter.response}</span>
@@ -112,7 +112,7 @@ const MapPage: React.FC = () => {
       </header>
       <div className="flex flex-1 overflow-hidden relative">
         {/* Sidebar izquierdo */}
-        <aside className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white border-r border-gray-200'} p-2 md:p-4 overflow-y-auto z-40 w-64 md:w-80 flex-shrink-0 max-h-full`}>
+        <aside className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white border-r border-gray-200'} p-2 md:p-4 overflow-y-auto z-4 w-64 md:w-80 flex-shrink-0 max-h-full`}>
           <LeftPanel
             toggleCombinedFilters={() => setShowHeatmap(!showHeatmap)}
             showCombinedFilters={showHeatmap}
@@ -153,7 +153,7 @@ const MapPage: React.FC = () => {
         </div>
         {/* Sidebar derecho fijo solo en vista de mapa */}
         {activeTab === 'map' && (
-          <div style={{ position: 'fixed', right: 0,  height: 'calc(100vh - 112px)', zIndex: 40, width: 340, maxWidth: '90vw', background: theme === 'dark' ? '#1f2937' : '#fff', boxShadow: '-2px 0 8px rgba(0,0,0,0.1)', borderLeft: theme === 'dark' ? '1px solid #23272f' : '1px solid #e5e7eb', padding: '20px 24px', overflowY: 'auto' }}>
+          <div style={{ position: 'fixed', right: 0,  height: 'calc(100vh - 112px)', zIndex: 30, width: 340, maxWidth: '90vw', background: theme === 'dark' ? '#1f2937' : '#fff', boxShadow: '-2px 0 8px rgba(0,0,0,0.1)', borderLeft: theme === 'dark' ? '1px solid #23272f' : '1px solid #e5e7eb', padding: '20px 24px', overflowY: 'auto' }}>
             <RightSidebarTop10Barrios data={barriosStats} headerHeight={112} />
           </div>
         )}

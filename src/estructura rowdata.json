@@ -1,4 +1,19 @@
-{
+{ "sociodemographic_data": {
+  "Barrio": "Carrizal",
+  "Estrato": "1",
+  "Celular 1": "3145712947",
+  "Celular 2": "3016774956",
+  "Localidad": "Metropolitana",
+  "Dirección": "CRA 4 # 49B - 34,Localidad Metropolitana, Carrizal, Barranquilla, Colombia",
+  "PRIMER NOMBRE": "MIRIAM",
+  "SEGUNDO NOMBRE": "ASTRID",
+  "PRIMER APELLIDO": "MARTINEZ",
+  "SEGUNDO APELLIDO": "DE LOS REYES",
+  "Tipo de documento de la persona con discapacidad": "Cédula de Ciudadanía",
+  "Número de documento de la persona con discapacidad": "22349221",
+  "¿Cuál es su identidad de género / la identidad de género de la persona con discapacidad actualmente?": "Mujer",
+  "¿Qué sexo le fue asignado al nacer en su certificado de nacimiento / en el certificado de nacimiento de la persona con discapacidad?": "Femenino"
+},
   "metadata": {
     "stratum": "1",
     "row_number": 4,
