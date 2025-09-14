@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 // Configura tu URL y API KEY de Supabase
-const supabase = createClient('https://TU_URL.supabase.co', 'TU_API_KEY');
+
 import React, { useState } from 'react';
 // Modal de confirmación para limpiar la base de datos
 function ConfirmModal({ open, onConfirm, onCancel, loading }: { open: boolean, onConfirm: () => void, onCancel: () => void, loading?: boolean }) {
@@ -32,6 +32,8 @@ import { ExcelUploader } from '@/components/excel/ExcelUploader';
 import { StatsDisplay } from '@/components/excel/StatsDisplay';
 import { useTheme } from '@/context/ThemeContext';
 import ThemeToggleButton from './ui/ThemeToggleButton';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface ExcelUploaderModalProps {
   isOpen: boolean;
@@ -74,14 +76,14 @@ const ExcelUploaderModal: React.FC<ExcelUploaderModalProps> = ({ isOpen, onClose
           onCancel={() => setShowConfirm(false)}
           onConfirm={async () => {
             setLoadingDelete(true);
-            const { error } = await supabase.from('survey_responses').delete().neq('id', '');
+         const { error } = await supabase.rpc('truncate_survey_responses');
             setLoadingDelete(false);
             setShowConfirm(false);
             if (!error) {
-              // Puedes mostrar un toast o mensaje bonito aquí
-              alert('La base de datos fue limpiada correctamente.');
+              toast.success('La base de datos fue limpiada correctamente.');
+              setTimeout(() => window.location.reload(), 1200);
             } else {
-              alert('Ocurrió un error al limpiar la base de datos.');
+              toast.error('Ocurrió un error al limpiar la base de datos.');
             }
           }}
         />
@@ -100,6 +102,8 @@ const ExcelUploaderModal: React.FC<ExcelUploaderModalProps> = ({ isOpen, onClose
             <ExcelUploader 
               onUploadComplete={(stats) => {
                 onUploadComplete(stats);
+                toast.success('Archivo subido correctamente.');
+                setTimeout(() => window.location.reload(), 1200);
                 onClose();
               }} 
             />

@@ -161,6 +161,8 @@ const getQuestionText = (questionId: string, category: string): string => {
 
 export const useCombinedFilters = () => {
   const [categories, setCategories] = useState<string[]>([]);
+  const [allCategories, setAllCategories] = useState<string[]>([]); // Todas las categorías incluyendo OTROS
+  const [showAllCategories, setShowAllCategories] = useState(false); // Estado para mostrar todas
   const [questionsByCategory, setQuestionsByCategory] = useState<Record<string, QuestionByCategory[]>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -187,12 +189,31 @@ export const useCombinedFilters = () => {
         }
 
         if (data && data.length > 0) {
-            const categoryNames = data; // data ya es un array de strings
-            setCategories(categoryNames);
-            console.log('✅ Categorías cargadas:', categoryNames);
+            // Guardar todas las categorías (incluyendo OTROS)
+            const allCategoriesData = [...data];
+            setAllCategories(allCategoriesData);
+            
+            // Filtrar la categoría 'OTROS' para que no se muestre por defecto
+            const filteredCategories = data.filter(cat => cat.trim().toUpperCase() !== 'OTROS');
+            console.log('✅ Categorías cargadas (sin OTROS):', filteredCategories);
+            console.log('📋 Todas las categorías disponibles:', allCategoriesData);
+            
+            // Log para depurar coincidencias exactas y posibles espacios
+            filteredCategories.forEach(cat => {
+                if (cat.trim() === "CUIDADEOR DE PCD") {
+                    console.log('✅ Se encontró la categoría "CUIDADEOR DE PCD" (coincidencia exacta)');
+                }
+            });
+            if (!filteredCategories.includes("CUIDADEOR DE PCD")) {
+                console.warn('⚠️ Falta la categoría "CUIDADEOR DE PCD" en los resultados');
+            }
+            
+            // Establecer las categorías mostradas según el estado showAllCategories
+            setCategories(showAllCategories ? allCategoriesData : filteredCategories);
         } else {
             console.warn('⚠️ No se encontraron categorías en la base de datos');
             setCategories([]);
+            setAllCategories([]);
         }
     } catch (err) {
         console.error('❌ Error en loadCategories:', err);
@@ -201,6 +222,28 @@ export const useCombinedFilters = () => {
         setLoading(false);
     }
   }, []);
+
+  // =====================================================
+  // FUNCIÓN: Alternar mostrar todas las categorías
+  // =====================================================
+  const toggleShowAllCategories = useCallback(() => {
+    setShowAllCategories(prev => {
+      const newValue = !prev;
+      console.log(`🔄 Cambiando vista de categorías: ${newValue ? 'Mostrar todas' : 'Mostrar filtradas'}`);
+      
+      // Actualizar las categorías mostradas inmediatamente
+      if (newValue) {
+        setCategories(allCategories);
+        console.log('📋 Mostrando todas las categorías:', allCategories);
+      } else {
+        const filteredCategories = allCategories.filter(cat => cat.trim().toUpperCase() !== 'OTROS');
+        setCategories(filteredCategories);
+        console.log('📋 Mostrando categorías filtradas:', filteredCategories);
+      }
+      
+      return newValue;
+    });
+  }, [allCategories]);
 
   // =====================================================
   // FUNCIÓN: Cargar preguntas por categoría
@@ -264,28 +307,27 @@ export const useCombinedFilters = () => {
   const getQuestionResponses = useCallback(async (questionId: string, category: string): Promise<QuestionResponse[]> => {
     try {
       console.log(`🔄 Cargando respuestas para pregunta ${questionId} en categoría ${category}`);
-      
-      // Intentar obtener respuestas reales de la base de datos
-      const { data, error } = await supabase.rpc('get_responses_by_question_simple', {
-        category_name: category,
-        question_id: questionId
+      // Solo actualizar la caché usando la nueva función y luego consultar
+      await supabase.rpc('update_question_response_cache_one', {
+        p_category_name: category,
+        p_question_id: questionId
       });
-      
-      if (error) {
-        console.log('ℹ️ Función SQL no disponible, usando respuestas reales de ejemplo:', error.message);
-        // Fallback: crear respuestas basadas en datos reales conocidos
-        const fallbackResponses: QuestionResponse[] = generateRealisticFallbackResponses(questionId, category);
-        console.log(`✅ Respuestas realistas de fallback cargadas: ${fallbackResponses.length}`);
-        return fallbackResponses;
-      }
-      
-      if (data && data.length > 0) {
-        console.log(`✅ Respuestas reales cargadas: ${data.length}`);
-        return data;
-      } else {
-        console.warn('⚠️ No se encontraron respuestas, usando respuestas realistas');
-        return generateRealisticFallbackResponses(questionId, category);
-      }
+      // Espera 2 segundos y consulta los datos
+      return new Promise<QuestionResponse[]>(resolve => {
+        setTimeout(async () => {
+          const { data: newCacheData } = await supabase.rpc('get_question_response_cache', {
+            p_category_name: category,
+            p_question_id: questionId
+          });
+          if (newCacheData && newCacheData.length > 0) {
+            console.log(`✅ Respuestas desde caché actualizada: ${newCacheData.length}`);
+            resolve(newCacheData);
+          } else {
+            console.warn('⚠️ No se encontraron respuestas.');
+            resolve([]);
+          }
+        }, 2000);
+      });
     } catch (err) {
       console.error('❌ Error en getQuestionResponses:', err);
       return generateRealisticFallbackResponses(questionId, category);
@@ -296,61 +338,16 @@ export const useCombinedFilters = () => {
   // FUNCIÓN: Generar respuestas realistas basadas en datos reales
   // =====================================================
   const generateRealisticFallbackResponses = (questionId: string, category: string): QuestionResponse[] => {
-    // Respuestas reales basadas en los datos que encontramos
-    const realResponses: Record<string, string[]> = {
-      "TIPO DE DISCAPACIDAD": [
-        "No Tiene dificultad",
-        "Es adquirida", 
-        "Es de Nacimiento",
-        "No Sabe / No Responde"
-      ],
-      "SALUD": ["Si", "No", "Contributivo", "Subsidiado"],
-      "OTROS": ["Si", "No", "No sabe / No responde"],
-      "CERTIFICADO": ["Si", "No"],
-      "NECESIDADES": ["1 - Subsidio de transporte", "4 - Ocio, recreación y actividades de Bienestar", "6 - Ayudas técnicas"],
-      "ACCESIBILIDAD": ["1-Muy difícil", "2-Difícil", "3-Fácil", "4-Muy fácil", "No aplica"],
-      "CUIDADEOR DE PCD": ["Si", "No", "De 55 a 64 años", "Secundaria completa"],
-      "SOCIODEMOGRÁFICO": ["Viudo/a", "Familiar", "6 o más hijos"],
-      "CONDICIONES DE VIDA": ["Si", "No"],
-      "NECESIDAD DE CUIDADOR": ["Si", "No"],
-      "EDUCACIÓN Y ECONOMÍA": ["Primaria incompleta", "No tiene ingresos", "1 - De $1 a $300.000"]
-    };
-
-    // Usar respuestas reales si existen para la categoría
-    const responses = realResponses[category] || realResponses["TIPO DE DISCAPACIDAD"];
-    
-    return responses.map((value, index) => ({
-      response_value: value,
-      response_count: Math.floor(Math.random() * 5000) + 1000, // Números más realistas
-      response_percentage: Math.floor(Math.random() * 30) + 10
-    }));
+  // Eliminado: no cargar respuestas simuladas
+  return [];
   };
 
   // =====================================================
   // FUNCIÓN: Obtener pregunta por índice específico
   // =====================================================
   const getQuestionByIndex = useCallback(async (category: string, questionIndex: number): Promise<QuestionByCategory | null> => {
-    try {
-      console.log(`🔄 Obteniendo pregunta por índice: ${questionIndex} en categoría: ${category}`);
-
-      const categoryMapping = QUESTION_MAPPING[category];
-      if (categoryMapping) {
-        const questionIds = Object.keys(categoryMapping);
-        if (questionIndex >= 0 && questionIndex < questionIds.length) {
-          const questionId = questionIds[questionIndex];
-          return {
-            category,
-            question_id: questionId,
-            question_text: categoryMapping[questionId],
-            response_count: Math.floor(Math.random() * 100) + 50
-          };
-        }
-      }
-      return null;
-    } catch (error) {
-      console.error('❌ Excepción al obtener pregunta por índice:', error);
-      return null;
-    }
+  // Eliminado: no generar preguntas simuladas ni respuestas_count aleatorias
+  return null;
   }, []);
 
   // =====================================================
@@ -403,8 +400,12 @@ export const useCombinedFilters = () => {
         dataExample: data?.slice(0, 2) || 'Sin datos'
       });
       
-      // Agregar un console.log para verificar matches_count
-      console.log('🔍 Verificando matches_count en los datos recibidos:', data.map(d => d.matches_count));
+        // Agregar un console.log para verificar matches_count
+        if (Array.isArray(data)) {
+          console.log('🔍 Verificando matches_count en los datos recibidos:', data.map(d => d.matches_count));
+        } else {
+          console.warn('⚠️ Los datos recibidos no son un array:', data);
+        }
       
       // Si la nueva función sin límite no existe, probar con la versión mejorada (límite 500)
       if (error && error.message?.includes('does not exist')) {
@@ -478,46 +479,8 @@ export const useCombinedFilters = () => {
       }
       
       if (error) {
-        console.log('ℹ️ Función SQL no disponible, generando datos para todos los barrios:', error.message);
-        
-        // Lista completa de barrios de Barranquilla (más de 30 barrios)
-        const todosBarrios = [
-          'Carrizal', 'El Prado', 'Boston', 'Las Flores', 'Rebolo', 'San José', 
-          'La Playa', 'Simón Bolívar', 'Los Olivos', 'El Silencio', 'El Bosque',
-          'Barranquillita', 'Centro', 'Montecristo', 'Las Nieves', 'La Luz', 
-          'Barrio Abajo', 'Villanueva', 'El Carmen', 'San Felipe', 'La Victoria',
-          'Santo Domingo', 'Santa María', 'Los Alpes', 'La Cumbre', 'La Unión',
-          'El Recreo', 'Villa Country', 'Paraíso', 'Alto Prado', 'Bellavista',
-          'Riomar', 'Ciudad Jardín', 'El Porvenir', '7 de Abril', 'El Poblado',
-          'Ciudadela 20 de Julio', 'Las Américas', 'Nueva Granada', 'San Roque'
-        ];
-        
-        // Generar estadísticas para todos los barrios, asegurando que más tengan coincidencias
-        const fallbackStats: FilterStats[] = todosBarrios.map((barrio, index) => {
-          // Aumentamos la probabilidad de coincidencias (40% de los barrios)
-          const tieneCoincidencias = index % 3 === 0;
-          const matchCount = tieneCoincidencias ? 
-            5 + Math.floor(Math.random() * 20) : // Barrios con coincidencias
-            Math.floor(Math.random() * 3);      // Barrios con pocas o ninguna coincidencia
-          
-          const totalEncuestas = 50 + Math.floor(Math.random() * 100);
-          const matchPercentage = totalEncuestas > 0 ? 
-            Math.round((matchCount / totalEncuestas) * 100) : 0;
-            
-          return {
-            barrio: barrio,
-            localidad: ['Norte-Centro Histórico', 'Riomar', 'Suroccidente', 'Suroriente', 'Metropolitana'][index % 5],
-            coordx: 10.93 + (index * 0.005),
-            coordsy: -74.80 - (index * 0.005),
-            total_encuestas: totalEncuestas,
-            matches_count: matchCount,
-            match_percentage: matchPercentage,
-            intensity_score: matchPercentage
-          };
-        });
-        
-        setFilterStats(fallbackStats);
-        console.log(`✅ Estadísticas de fallback aplicadas para ${fallbackStats.length} barrios`);
+        console.log('ℹ️ Función SQL no disponible:', error.message);
+        setFilterStats([]);
         return;
       }
       
@@ -602,6 +565,20 @@ export const useCombinedFilters = () => {
   }, [loadCategories]);
 
   // =====================================================
+  // EFECTO: Actualizar categorías cuando cambie showAllCategories
+  // =====================================================
+  useEffect(() => {
+    if (allCategories.length > 0) {
+      if (showAllCategories) {
+        setCategories(allCategories);
+      } else {
+        const filteredCategories = allCategories.filter(cat => cat.trim().toUpperCase() !== 'OTROS');
+        setCategories(filteredCategories);
+      }
+    }
+  }, [showAllCategories, allCategories]);
+
+  // =====================================================
   // EFECTO: Aplicar filtros cuando cambien
   // =====================================================
   useEffect(() => {
@@ -611,6 +588,8 @@ export const useCombinedFilters = () => {
   return {
     // Estados
     categories,
+    allCategories,
+    showAllCategories,
     questionsByCategory,
     loading,
     error,
@@ -626,7 +605,8 @@ export const useCombinedFilters = () => {
     addFilter,
     removeFilter,
     clearFilters,
-    applyCombinedFilters
+    applyCombinedFilters,
+    toggleShowAllCategories
   };
 };
 

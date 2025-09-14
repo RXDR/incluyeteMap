@@ -12,6 +12,8 @@ export default function CombinedFiltersPanel({ onFiltersChange, onStatsChange }:
   const { theme } = useTheme();
   const {
     categories,
+    showAllCategories,
+    toggleShowAllCategories,
     questionsByCategory,
     loading,
     error,
@@ -34,7 +36,6 @@ export default function CombinedFiltersPanel({ onFiltersChange, onStatsChange }:
   const [questionResponses, setQuestionResponses] = useState<any[]>([]);
   const [responsesLoading, setResponsesLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [showAllCategories, setShowAllCategories] = useState(false);
 
   // =====================================================
   // FILTRADO INTELIGENTE DE CATEGORÍAS
@@ -127,7 +128,10 @@ export default function CombinedFiltersPanel({ onFiltersChange, onStatsChange }:
     clearFilters();
     setExpandedCategories(new Set());
     setSearchTerm('');
-    setShowAllCategories(false);
+    // Reset showAllCategories to false when clearing all filters
+    if (showAllCategories) {
+      toggleShowAllCategories();
+    }
   };
 
   // =====================================================
@@ -135,7 +139,10 @@ export default function CombinedFiltersPanel({ onFiltersChange, onStatsChange }:
   // =====================================================
   const clearSearch = () => {
     setSearchTerm('');
-    setShowAllCategories(false);
+    // Reset showAllCategories to false when clearing search
+    if (showAllCategories) {
+      toggleShowAllCategories();
+    }
   };
 
   // =====================================================
@@ -229,13 +236,23 @@ export default function CombinedFiltersPanel({ onFiltersChange, onStatsChange }:
         </div>
         
         {/* ===================================================== */}
-        {/* CONTROLES DE VISIBILIDAD */}
+        {/* CONTROLES DE VISIBILIDAD - ALINEADOS */}
         {/* ===================================================== */}
         <div className="flex items-center justify-between text-xs">
           <span className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
             {filteredCategories.length} de {categories.length} categorías
           </span>
           
+          <button
+            onClick={toggleShowAllCategories}
+            className={`underline transition-colors ${
+              theme === 'dark' 
+                ? 'text-blue-400 hover:text-blue-300' 
+                : 'text-blue-600 hover:text-blue-700'
+            }`}
+          >
+            {showAllCategories ? 'Mostrar menos' : 'Mostrar todas'}
+          </button>
         </div>
       </div>
 

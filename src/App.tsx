@@ -3,25 +3,24 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import React, { Suspense } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import React, { Suspense, useState } from "react";
+import LoginIncluyete from "./components/LoginIncluyete";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import Dashboard from "./pages/Dashboard";
-import SurveyDataManager from "./pages/SurveyDataManager";
-import GeoportalInterface from "./components/GeoportalInterface";
-import BarranquillaRealMap from "./components/BarranquillaRealMap";
-import BarranquillaChoroplethMap from "./components/BarranquillaChoroplethMap";
-import BarranquillaChoroplethMapNoMap from "./components/BarranquillaChoroplethMapNoMap";
-import DataManagement from "./components/DataManagement";
-import TestMap from "./pages/TestMap";
 import MapPage from "./pages/MapPage";
 import DataVisualization from "./pages/DataVisualization";
 
 const queryClient = new QueryClient();
 
 const App = () => {
+  const [logged, setLogged] = useState(() => localStorage.getItem('incluyete_logged') === 'true');
+
+  function PrivateRoute({ children }) {
+    return logged ? children : <Navigate to="/login" replace />;
+  }
+
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
@@ -37,14 +36,17 @@ const App = () => {
             >
               <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Cargando página...</div>}>
                 <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/mapa" element={<MapPage />} />
+                  <Route path="/login" element={<LoginIncluyete onLogin={() => setLogged(true)} />} />
+                  <Route path="/" element={<PrivateRoute><Index /></PrivateRoute>} />
+                  <Route path="/mapa" element={<PrivateRoute><MapPage /></PrivateRoute>} />
                   <Route
                     path="/visualization"
                     element={
-                      <Suspense fallback={<div>Cargando...</div>}>
-                        <DataVisualization data={[]} />
-                      </Suspense>
+                      <PrivateRoute>
+                        <Suspense fallback={<div>Cargando...</div>}>
+                          <DataVisualization data={[]} />
+                        </Suspense>
+                      </PrivateRoute>
                     }
                   />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

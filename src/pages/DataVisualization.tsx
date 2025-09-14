@@ -133,7 +133,7 @@ const DataVisualization: React.FC<DataVisualizationProps> = ({ data: initialData
     } catch (error) {
       toast({
         title: "Error",
-        description: "No se pudieron descargar los datos",
+        description: "error al  descargar los datos",
         variant: "destructive",
       });
     }

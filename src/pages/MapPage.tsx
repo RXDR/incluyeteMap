@@ -2,39 +2,94 @@ import React, { useState, useCallback, useEffect } from 'react';
 // Warm-up: consulta rápida a Supabase para preparar la base de datos
 import { createClient } from '@supabase/supabase-js';
 // Configura tu URL y API KEY de Supabase
-const supabase = createClient('https://TU_URL.supabase.co', 'TU_API_KEY');
+
 import { useBarriosStats } from '../hooks/useBarriosStats';
 import TestMap from './TestMap';
 import LeftPanel from '../components/LeftPanel';
-import { CombinedFilter, FilterStats } from '@/hooks/useCombinedFilters';
+import { CombinedFilter, FilterStats, useCombinedFilters } from '@/hooks/useCombinedFilters';
 import { useTheme } from '@/context/ThemeContext';
 import RightSidebarTop10Barrios from '../components/RightSidebarTop10Barrios';
-import ActiveFiltersHeader from '../components/ActiveFiltersHeader';
+
 import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
 import DataVisualization from './DataVisualization';
 import '@fontsource/inter';
+import { supabase } from '@/integrations/supabase/client';
+import LoadingModal from '../components/LoadingModal';
 
 const MapPage: React.FC = () => {
-  // Efecto de warm-up al cargar la página
+  // Eliminado: ya no se usa precálculo global ni su estado
+  // Estado para la pregunta y caché
+  const [questionCache, setQuestionCache] = useState<any[]>([]);
+  const [loadingQuestion, setLoadingQuestion] = useState(false);
+  const [questionLoaded, setQuestionLoaded] = useState(false);
+
+  // Consulta la caché al montar
   useEffect(() => {
-  const warmup = async () => {
-    try {
-      await supabase
-        .from('survey_responses')
-        .select('id')
-        .limit(1);
-    } catch (e) {
-      // Silenciar error
-    }
-  };
-  warmup();
-}, []);
+  // Eliminar lógica hardcodeada: categoría y pregunta deben venir de props, estado, o interacción
+  }, []);
+  // Estado para mostrar mensaje de carga y éxito
+  // const [loadingQuestion, setLoadingQuestion] = useState(true);
+  // const [questionLoaded, setQuestionLoaded] = useState(false);
+
+  // Consulta repetida a la función get_responses_by_question_simple
+  /*
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+    let stopped = false;
+    const fetchQuestion = async () => {
+      try {
+        // Llama a la función de Supabase
+        const { data, error } = await supabase.rpc('get_responses_by_question_simple', {
+          category_name: 'TIPO DE DISCAPACIDAD',
+          question_id: 'Pensar, memorizar'
+        });
+        if (data && !error) {
+          setLoadingQuestion(false);
+          setQuestionLoaded(true);
+          stopped = true;
+          clearInterval(intervalId);
+        }
+      } catch (e) {
+        // Silenciar error
+      }
+    };
+    // Ejecuta la primera vez
+    fetchQuestion();
+    // Repite cada 15 segundos hasta obtener respuesta
+    intervalId = setInterval(() => {
+      if (!stopped) fetchQuestion();
+    }, 15000);
+    return () => clearInterval(intervalId);
+  }, []);
+  */
   const [activeTab, setActiveTab] = useState<'map' | 'visualization'>('map');
   const [combinedFilters, setCombinedFilters] = useState<CombinedFilter[]>([]);
   const [selectedMetric, setSelectedMetric] = useState<string>('');
   const [showHeatmap, setShowHeatmap] = useState<boolean>(true);
   const [expandedSections, setExpandedSections] = useState<{ [key: string]: boolean }>({});
   const { theme } = useTheme();
+  const [showLoadingModal, setShowLoadingModal] = useState(false);
+  // Importar el estado de carga de preguntas desde el hook de filtros combinados
+  // Si usas useCombinedFiltersOptimizado, cambia el import aquí
+  const { statsLoading } = useCombinedFilters();
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+    if (statsLoading) {
+      setShowLoadingModal(true);
+      // Si tarda más de 20 segundos, recarga la página
+      timeoutId = setTimeout(() => {
+        window.location.reload();
+      }, 20000);
+    } else {
+      setShowLoadingModal(false);
+      if (timeoutId) clearTimeout(timeoutId);
+    }
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [statsLoading]);
+  const [retryData, setRetryData] = useState<any>(null);
 
   // Usar el hook global para manejar stats
   const {
@@ -63,12 +118,34 @@ const MapPage: React.FC = () => {
     }
   }, [combinedFilters]);
 
+  // Handler para error de 'map'
+  const handleMapError = useCallback((dataToRetry) => {
+    setShowLoadingModal(true);
+    setRetryData(dataToRetry);
+    setTimeout(() => {
+      // Reintentar la función con los mismos datos
+      // Aquí deberías llamar a la función que falló, por ejemplo:
+      // applyCombinedFilters(retryData);
+      setShowLoadingModal(false);
+    }, 20000);
+  }, []);
+
   return (
-  <div className={`h-screen flex flex-col ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'} font-inter`}>
+  <>
+      <LoadingModal visible={showLoadingModal} message="Se están cargando el total de respuestas para estas preguntas, espere por favor..." />
+      {/* Eliminado: banner de precálculo global */}
+      <div className={`h-screen flex flex-col ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'} font-inter`}>
+  {/* Eliminado: mensaje de carga de pregunta */}
         <header className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white border-b border-gray-200'} z-50 flex-shrink-0`}>
           <div className="py-4 px-6 flex justify-between items-center">
-            <h1 className={`text-2xl md:text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-              Incluyete <span className="text-yellow-500 text-3xl md:text-5xl">+</span>
+            <h1 className={`text-2xl md:text-4xl font-bold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+              <span style={{fontWeight:700, fontFamily:'inherit', letterSpacing:'-1px'}}>
+                <span style={{textTransform:'capitalize'}}>Incl</span>
+                <span style={{color: theme === 'dark' ? '#fff' : '#111', fontWeight:700}}>ú</span>
+                <span style={{textTransform:'lowercase'}}>ye</span>
+                <span style={{color: theme === 'dark' ? '#fff' : '#111', fontWeight:700}}>TE</span>
+              </span>
+              <span className="text-yellow-500 text-3xl md:text-5xl" style={{fontWeight:900, marginLeft:4}}>+</span>
             </h1>
             <div className="flex items-center gap-4">
               <div className="flex space-x-2">
@@ -93,8 +170,18 @@ const MapPage: React.FC = () => {
                   Visualización
                 </button>
               </div>
-              
               <ThemeToggleButton />
+              <button
+                className="ml-4 px-3 py-1 rounded bg-red-500 text-white font-semibold hover:bg-red-600 transition-colors"
+                onClick={() => {
+                  localStorage.removeItem('incluyete_logged');
+                  sessionStorage.clear();
+                  window.location.href = '/login';
+                }}
+                title="Cerrar sesión"
+              >
+                Cerrar sesión
+              </button>
             </div>
           </div>
         {combinedFilters.length > 0 && (
@@ -119,7 +206,7 @@ const MapPage: React.FC = () => {
       </header>
       <div className="flex flex-1 overflow-hidden relative">
         {/* Sidebar izquierdo */}
-        <aside className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white border-r border-gray-200'} p-2 md:p-4 overflow-y-auto z-4 w-64 md:w-80 flex-shrink-0 max-h-full`}>
+        <aside className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white border-r border-gray-200'} p-2 md:p-4 overflow-y-auto z-4 w-64 md:w-80 flex-shrink-0 max-h-full relative`}>
           <LeftPanel
             toggleCombinedFilters={() => setShowHeatmap(!showHeatmap)}
             showCombinedFilters={showHeatmap}
@@ -134,13 +221,14 @@ const MapPage: React.FC = () => {
             showDataVisualizer={false}
             uploadStats={undefined}
           />
+          {/* El botón cerrar sesión ahora está en el header */}
         </aside>
         {/* Contenido principal */}
         <div className="flex-1 flex flex-col relative" style={{ minWidth: 0 }}>
           <main className="relative flex-1 z-30 overflow-hidden">
             {activeTab === 'map' ? (
               <TestMap
-                combinedStats={barriosStats}
+                combinedStats={barriosStats as FilterStats[]}
                 selectedMetric={selectedMetric}
                 showHeatmap={showHeatmap}
               />
@@ -166,5 +254,7 @@ const MapPage: React.FC = () => {
         )}
       </div>
       </div>
+    </>
   );
-};export default MapPage;
+};
+export default MapPage;
