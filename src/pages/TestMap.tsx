@@ -9,6 +9,9 @@ import { FilterStats, useCombinedFilters } from '@/hooks/useCombinedFilters';
 import { FeatureCollection, Geometry } from 'geojson';
 import { supabase } from '@/integrations/supabase/client';
 import ExclusivePointsMap from '@/components/ExclusivePointsMap';
+import CombinedFiltersPanel from '@/components/CombinedFiltersPanel';
+import { useOnlyCombinedFilters } from '@/hooks/useOnlyCombinedFilters';
+
 
 interface TestMapProps {
   combinedStats: FilterStats[];
@@ -24,9 +27,13 @@ interface TestMapProps {
     match_percentage: number;
     intensity_score: number;
   }[];
+  mapViewType: 'poligonos' | 'puntos';
+  setMapViewType: React.Dispatch<React.SetStateAction<'poligonos' | 'puntos'>>;
+  combinedFilters: any[];
 }
 
-const TestMap: React.FC<TestMapProps> = ({ combinedStats, selectedMetric, showHeatmap, incomeData }) => {
+const TestMap: React.FC<TestMapProps> = ({ combinedStats, selectedMetric, showHeatmap, incomeData, mapViewType, setMapViewType, combinedFilters }) => {
+  // Usar los filtros recibidos por props
   // Estado para verificar si el mapa está cargado (debe ir antes de cualquier uso)
   const [mapLoaded, setMapLoaded] = useState<boolean>(false);
   // Estado para datos de respuestas por barrio
@@ -55,10 +62,9 @@ const TestMap: React.FC<TestMapProps> = ({ combinedStats, selectedMetric, showHe
   }, [getSurveyResponseCountsByBarrio]);
     
   // Hook de filtros combinado (debe ir antes de cualquier uso de combinedFilters)
-  const { combinedFilters } = useCombinedFilters();
+  // const { combinedFilters } = useCombinedFilters(); // Ya no se usa directamente aquí
 
-  // Estado para alternar entre vista de polígonos y puntos
-  const [mapViewType, setMapViewType] = useState<'poligonos' | 'puntos'>('poligonos');
+  // El estado mapViewType ahora viene de props
   // Estado para loader profesional y modal de error
   const [loading, setLoading] = useState(false);
   const [showLoadingModal, setShowLoadingModal] = useState(false);
@@ -68,13 +74,13 @@ const TestMap: React.FC<TestMapProps> = ({ combinedStats, selectedMetric, showHe
   const handlePointsView = useCallback(() => {
     setLoading(true);
     setMapViewType('puntos');
-  }, []);
+  }, [setMapViewType]);
 
   // Handler para alternar a la vista de polígonos con loader
   const handlePolygonsView = useCallback(() => {
     setLoading(true);
     setMapViewType('poligonos');
-  }, []);
+  }, [setMapViewType]);
 
   // Desactivar loader cuando el mapa de polígonos termina de cargar
   useEffect(() => {
@@ -515,7 +521,6 @@ const TestMap: React.FC<TestMapProps> = ({ combinedStats, selectedMetric, showHe
             Puntos
           </button>
         </div>
-        
         {/* Botón para mostrar/ocultar nombres solo en vista polígonos */}
         {mapViewType === 'poligonos' && (
           <button
@@ -530,7 +535,6 @@ const TestMap: React.FC<TestMapProps> = ({ combinedStats, selectedMetric, showHe
             {showLabels ? 'Ocultar barrios' : 'Mostrar barrios'}
           </button>
         )}
-        
         {(combinedStats.length > 0 || incomeData) && (
           <LeyendaHeatmap
             title="Personas que cumplen con el filtro"
@@ -574,7 +578,6 @@ const TestMap: React.FC<TestMapProps> = ({ combinedStats, selectedMetric, showHe
       {mapViewType === 'poligonos' ? (
         <>
           <div ref={mapContainer} className="w-full h-full" />
-          
           {/* Tooltips fijos para nombres de barrios solo en vista polígonos */}
           {showLabels && mapLoaded && (
             <>
@@ -607,7 +610,6 @@ const TestMap: React.FC<TestMapProps> = ({ combinedStats, selectedMetric, showHe
               })}
             </>
           )}
-          
           {/* Tooltip hover para polígonos */}
           {hoveredFeature && tooltipPos && (
             <div
@@ -639,8 +641,12 @@ const TestMap: React.FC<TestMapProps> = ({ combinedStats, selectedMetric, showHe
           )}
         </>
       ) : (
-        /* Vista de puntos: usar componente optimizado */
-        <ExclusivePointsMap />
+        /* Vista de puntos: usar componente optimizado y pasarle el filtro recibido por props */
+        <ExclusivePointsMap filters={combinedFilters.map(f => ({
+          category: f.category || '',
+          questionId: f.questionId,
+          response: f.response
+        }))} />
       )}
     </div>
   );

@@ -17,6 +17,8 @@ import { supabase } from '@/integrations/supabase/client';
 import LoadingModal from '../components/LoadingModal';
 
 const MapPage: React.FC = () => {
+  // Estado para alternar entre vista de polígonos y puntos
+  const [mapViewType, setMapViewType] = useState<'poligonos' | 'puntos'>('poligonos');
   // Eliminado: ya no se usa precálculo global ni su estado
   // Estado para la pregunta y caché
   const [questionCache, setQuestionCache] = useState<any[]>([]);
@@ -211,7 +213,7 @@ const MapPage: React.FC = () => {
             toggleCombinedFilters={() => setShowHeatmap(!showHeatmap)}
             showCombinedFilters={showHeatmap}
             combinedFilters={combinedFilters}
-            handleCombinedFiltersChange={handleCombinedFiltersChange}
+            handleCombinedFiltersChange={setCombinedFilters}
             handleCombinedStatsChange={handleCombinedStatsChange}
             toggleSection={toggleSection}
             expandedSections={expandedSections}
@@ -220,6 +222,7 @@ const MapPage: React.FC = () => {
             setShowDataVisualizer={() => {}}
             showDataVisualizer={false}
             uploadStats={undefined}
+            mapViewType={mapViewType}
           />
           {/* El botón cerrar sesión ahora está en el header */}
         </aside>
@@ -231,6 +234,9 @@ const MapPage: React.FC = () => {
                 combinedStats={barriosStats as FilterStats[]}
                 selectedMetric={selectedMetric}
                 showHeatmap={showHeatmap}
+                mapViewType={mapViewType}
+                setMapViewType={setMapViewType}
+                combinedFilters={combinedFilters}
               />
             ) : (
               <div className="h-full overflow-y-auto px-6">

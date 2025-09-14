@@ -2,27 +2,30 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { supabase } from '@/integrations/supabase/client';
-import { useCombinedFilters } from '@/hooks/useCombinedFilters';
+interface ExclusivePointsMapProps {
+  filters: { category: string; questionId: string; response: string }[];
+}
 
-const ExclusivePointsMap = () => {
+const ExclusivePointsMap: React.FC<ExclusivePointsMapProps> = ({ filters }) => {
   const [pointsData, setPointsData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
-  const { combinedFilters } = useCombinedFilters();
 
   // Cargar todos los puntos (sin límite)
   const fetchAllPoints = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
+      const filtrosFormateados = filters.map(f => ({
+        category: f.category || '',
+        questionId: f.questionId,
+        response: f.response
+      }));
+      console.log('Filtros enviados a get_filtered_persons_with_coords:', filtrosFormateados);
       const { data, error } = await supabase.rpc('get_filtered_persons_with_coords', {
-        filters: combinedFilters.map(f => ({
-          category: f.category || '',
-          questionId: f.questionId,
-          response: f.response
-        })),
+        filters: filtrosFormateados,
         limit_rows: 50000,
         offset_rows: 0
       });
@@ -42,11 +45,12 @@ const ExclusivePointsMap = () => {
     } finally {
       setLoading(false);
     }
-  }, [combinedFilters]);
+  }, [filters]);
 
+  // ...existing code...
   useEffect(() => {
     fetchAllPoints();
-  }, [fetchAllPoints]);
+  }, [fetchAllPoints, filters]);
 
   useEffect(() => {
     if (!mapContainer.current || pointsData.length === 0) return;
