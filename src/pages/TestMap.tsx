@@ -326,7 +326,7 @@ const TestMap: React.FC<TestMapProps> = ({ combinedStats, selectedMetric, showHe
                     Math.max(1, Math.floor(maxMatchesCount * 0.75)), '#800000',
                     maxMatchesCount, '#4d0000'
                   ],
-                  '#e9ecef' // Color gris claro para polígonos sin datos
+                  '#adb5bd' // Color gris oscuro para polígonos sin datos
                 ],
                 'fill-opacity': [
                   'case',
@@ -521,24 +521,30 @@ const TestMap: React.FC<TestMapProps> = ({ combinedStats, selectedMetric, showHe
             Puntos
           </button>
         </div>
-        {/* Botón para mostrar/ocultar nombres solo en vista polígonos */}
-        {mapViewType === 'poligonos' && (
-          <button
-            onClick={toggleLabels}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors shadow-md ${
-              showLabels
-                ? 'bg-blue-600 text-white hover:bg-blue-700'
-                : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
-            }`}
-            title={showLabels ? 'Ocultar nombres de barrios' : 'Mostrar nombres de barrios'}
-          >
-            {showLabels ? 'Ocultar barrios' : 'Mostrar barrios'}
-          </button>
-        )}
-        {(combinedStats.length > 0 || incomeData) && (
+        {/* Botón para mostrar/ocultar nombres de barrios en ambas vistas */}
+        <button
+          onClick={toggleLabels}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors shadow-md ${
+            showLabels
+              ? 'bg-blue-600 text-white hover:bg-blue-700'
+              : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
+          }`}
+          title={showLabels ? 'Ocultar nombres de barrios' : 'Mostrar nombres de barrios'}
+        >
+          {showLabels ? 'Ocultar barrios' : 'Mostrar barrios'}
+        </button>
+
+        {/* Mostrar leyenda solo en vista de polígonos */}
+        {mapViewType === 'poligonos' && (combinedStats.length > 0 || incomeData) && (
           <LeyendaHeatmap
             title="Personas que cumplen con el filtro"
-            steps={[
+            steps={[ 
+              {
+                value: 0,
+                label: 'Sin respuestas',
+                color: '#adb5bd',
+                opacity: 0.7
+              },
               {
                 value: Math.max(1, Math.floor(maxMatchesCount * 0.25)),
                 label: '0 - 25%',
@@ -582,8 +588,8 @@ const TestMap: React.FC<TestMapProps> = ({ combinedStats, selectedMetric, showHe
           {showLabels && mapLoaded && (
             <>
               {fixedTooltips.map((tooltip) => {
-                const fontSize = Math.max(8, Math.min(12, (tooltip.zoom || 12) - 3));
-                const maxWidth = Math.max(60, Math.min(100, fontSize * 8));
+                  const fontSize = Math.max(5, Math.min(8, (tooltip.zoom || 12) - 6));
+                  const maxWidth = Math.max(30, Math.min(60, fontSize * 6));
                 return (
                   <div
                     key={tooltip.id}
@@ -593,15 +599,15 @@ const TestMap: React.FC<TestMapProps> = ({ combinedStats, selectedMetric, showHe
                       top: tooltip.position.y,
                       transform: 'translate(-50%, -50%)',
                       color: '#000',
-                      fontSize: `${fontSize}px`,
-                      fontWeight: 700,
-                      textShadow: '1px 1px 2px rgba(255,255,255,0.9), -1px -1px 2px rgba(255,255,255,0.9), 1px -1px 2px rgba(255,255,255,0.9), -1px 1px 2px rgba(255,255,255,0.9)',
-                      whiteSpace: 'nowrap',
-                      maxWidth: `${maxWidth}px`,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      userSelect: 'none',
-                      lineHeight: '1'
+                        fontSize: `${fontSize}px`,
+                        fontWeight: 700,
+                        textShadow: '1px 1px 2px rgba(255,255,255,0.9), -1px -1px 2px rgba(255,255,255,0.9), 1px -1px 2px rgba(255,255,255,0.9), -1px 1px 2px rgba(255,255,255,0.9)',
+                        whiteSpace: 'nowrap',
+                        maxWidth: `${maxWidth}px`,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        userSelect: 'none',
+                        lineHeight: '1'
                     }}
                   >
                     {tooltip.nombre}
