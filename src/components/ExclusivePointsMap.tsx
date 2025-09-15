@@ -2,7 +2,8 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { supabase } from '@/integrations/supabase/client';
-import geoBarranquilla from '@/data/geo-barranquilla.json';
+import geoBarranquillaRaw from '@/data/geo-barranquilla.json';
+const geoBarranquilla = geoBarranquillaRaw as unknown as GeoJSON.FeatureCollection;
 interface ExclusivePointsMapProps {
   filters: { category: string; questionId: string; response: string }[];
 }
@@ -137,25 +138,6 @@ const ExclusivePointsMap: React.FC<ExclusivePointsMapProps> = ({ filters }) => {
             'line-opacity': 0.7
           }
         });
-          // Capa de nombres de barrios con fuente pequeña
-          map.current!.addLayer({
-            id: 'barrios-labels',
-            type: 'symbol',
-            source: 'barrios',
-            layout: {
-              'text-field': ['get', 'nombre'],
-              'text-size': 8,
-              'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'],
-              'text-offset': [0, 0.5],
-              'text-anchor': 'top',
-              'text-allow-overlap': true
-            },
-            paint: {
-              'text-color': '#222',
-              'text-halo-color': '#fff',
-              'text-halo-width': 1
-            }
-          });
       map.current!.addSource('puntos', {
         type: 'geojson',
         data: { type: 'FeatureCollection', features },

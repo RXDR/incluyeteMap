@@ -43,15 +43,20 @@ BEGIN
   RETURN QUERY EXECUTE
     'SELECT 
       row_number() OVER ()::integer as id,
-      sociodemographic_data->>''PRIMER NOMBRE'' as nombre,
-      (location_data->''coordinates''->>''x'')::numeric as x,
-      (location_data->''coordinates''->>''y'')::numeric as y,
-      location_data->>''barrio'' as barrio,
-      location_data->>''localidad'' as localidad
+      (
+        (sociodemographic_data::jsonb->>''PRIMER NOMBRE'') || '' '' ||
+        (sociodemographic_data::jsonb->>''SEGUNDO NOMBRE'') || '' '' ||
+        (sociodemographic_data::jsonb->>''PRIMER APELLIDO'') || '' '' ||
+        (sociodemographic_data::jsonb->>''SEGUNDO APELLIDO'')
+      ) as nombre,
+      (location_data::jsonb->'coordinates'->>''x'')::numeric as x,
+      (location_data::jsonb->'coordinates'->>''y'')::numeric as y,
+      location_data::jsonb->>''barrio'' as barrio,
+      location_data::jsonb->>''localidad'' as localidad
     FROM survey_responses
     WHERE ' || where_sql || '
-      AND location_data->>''barrio'' IS NOT NULL
-      AND location_data->>''barrio'' != '''' '
+      AND location_data::jsonb->>''barrio'' IS NOT NULL
+      AND location_data::jsonb->>''barrio'' != '''' '
     || ' LIMIT ' || limit_rows || ' OFFSET ' || offset_rows || ';';
 END;
 $$ LANGUAGE plpgsql;
