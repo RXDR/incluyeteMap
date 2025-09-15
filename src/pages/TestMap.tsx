@@ -521,18 +521,20 @@ const TestMap: React.FC<TestMapProps> = ({ combinedStats, selectedMetric, showHe
             Puntos
           </button>
         </div>
-        {/* Botón para mostrar/ocultar nombres de barrios en ambas vistas */}
-        <button
-          onClick={toggleLabels}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors shadow-md ${
-            showLabels
-              ? 'bg-blue-600 text-white hover:bg-blue-700'
-              : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
-          }`}
-          title={showLabels ? 'Ocultar nombres de barrios' : 'Mostrar nombres de barrios'}
-        >
-          {showLabels ? 'Ocultar barrios' : 'Mostrar barrios'}
-        </button>
+        {/* Botón para mostrar/ocultar nombres de barrios solo en poligonos */}
+        {mapViewType === 'poligonos' && (
+          <button
+            onClick={toggleLabels}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors shadow-md ${
+              showLabels
+                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
+            }`}
+            title={showLabels ? 'Ocultar nombres de barrios' : 'Mostrar nombres de barrios'}
+          >
+            {showLabels ? 'Ocultar barrios' : 'Mostrar barrios'}
+          </button>
+        )}
 
         {/* Mostrar leyenda solo en vista de polígonos */}
         {mapViewType === 'poligonos' && (combinedStats.length > 0 || incomeData) && (

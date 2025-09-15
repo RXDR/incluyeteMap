@@ -312,24 +312,7 @@ const DataVisualization: React.FC<DataVisualizationProps> = ({ data: initialData
           <h1 className="text-3xl font-bold text-foreground">
             Visualización de Datos
           </h1>
-          <button
-            onClick={() => {
-              // Guardar el estado actual antes de volver
-              const currentState = {
-                filters: location.state?.filters || [],
-                stats: location.state?.stats || [],
-                showHeatmap: true,
-                chartType,
-                showPercentage,
-                dataView
-              };
-              localStorage.setItem('mapState', JSON.stringify(currentState));
-              navigate(-1);
-            }}
-            className="bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-secondary/80 transition-colors"
-          >
-            ← Volver
-          </button>
+         
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">

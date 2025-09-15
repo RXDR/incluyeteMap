@@ -9,6 +9,7 @@ import LeftPanel from '../components/LeftPanel';
 import { CombinedFilter, FilterStats, useCombinedFilters } from '@/hooks/useCombinedFilters';
 import { useTheme } from '@/context/ThemeContext';
 import RightSidebarTop10Barrios from '../components/RightSidebarTop10Barrios';
+import RightSidebarGeneralBarrios from '../components/RightSidebarGeneralBarrios';
 
 import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
 import DataVisualization from './DataVisualization';
@@ -93,13 +94,26 @@ const MapPage: React.FC = () => {
   }, [statsLoading]);
   const [retryData, setRetryData] = useState<any>(null);
 
-  // Usar el hook global para manejar stats
-  const {
-    stats: barriosStats,
-    setStats: setBarriosStats,
-    totals: generalTotals,
-    top10Barrios
-  } = useBarriosStats([]);
+  // Estado para datos generales y filtrados
+  const [generalBarriosStats, setGeneralBarriosStats] = useState<any[]>([]);
+  const [barriosStats, setBarriosStats] = useState<any[]>([]);
+  const [generalStatsLoading, setGeneralStatsLoading] = useState(false);
+
+  // Cargar datos generales al iniciar o cuando no hay filtros y la vista es polígonos
+  useEffect(() => {
+    if (mapViewType === 'poligonos' && combinedFilters.length === 0) {
+      setGeneralStatsLoading(true);
+      supabase.rpc('get_survey_response_stats_by_barrio')
+        .then(({ data, error }) => {
+          if (!error && Array.isArray(data)) {
+            setGeneralBarriosStats(data);
+          } else {
+            setGeneralBarriosStats([]);
+          }
+          setGeneralStatsLoading(false);
+        });
+    }
+  }, [mapViewType, combinedFilters]);
 
   // Sincronizar stats cuando cambian los filtros
   const handleCombinedStatsChange = useCallback((stats: FilterStats[]) => {
@@ -231,7 +245,11 @@ const MapPage: React.FC = () => {
           <main className="relative flex-1 z-30 overflow-hidden">
             {activeTab === 'map' ? (
               <TestMap
-                combinedStats={barriosStats as FilterStats[]}
+                combinedStats={
+                  mapViewType === 'poligonos' && combinedFilters.length === 0
+                    ? generalBarriosStats
+                    : barriosStats
+                }
                 selectedMetric={selectedMetric}
                 showHeatmap={showHeatmap}
                 mapViewType={mapViewType}
@@ -241,11 +259,7 @@ const MapPage: React.FC = () => {
             ) : (
               <div className="h-full overflow-y-auto px-6">
                 <DataVisualization
-                  data={barriosStats}
-                  totals={{
-                    totalEncuestas: generalTotals.totalEncuestas,
-                    totalCoincidencias: generalTotals.totalCoincidencias
-                  }}
+                  data={combinedFilters.length === 0 ? generalBarriosStats : barriosStats}
                   activeFilters={combinedFilters}
                 />
               </div>
@@ -255,7 +269,10 @@ const MapPage: React.FC = () => {
         {/* Sidebar derecho fijo solo en vista de mapa */}
         {activeTab === 'map' && (
           <div style={{ position: 'fixed', right: 0,  height: 'calc(100vh - 112px)', zIndex: 30, width: 340, maxWidth: '90vw', background: theme === 'dark' ? '#1f2937' : '#fff', boxShadow: '-2px 0 8px rgba(0,0,0,0.1)', borderLeft: theme === 'dark' ? '1px solid #23272f' : '1px solid #e5e7eb', padding: '20px 24px', overflowY: 'auto' }}>
-            <RightSidebarTop10Barrios data={barriosStats} headerHeight={112} />
+            {((mapViewType === 'poligonos' || mapViewType === 'puntos') && combinedFilters.length === 0)
+              ? <RightSidebarGeneralBarrios data={generalBarriosStats} headerHeight={112} />
+              : <RightSidebarTop10Barrios data={barriosStats} headerHeight={112} />
+            }
           </div>
         )}
       </div>
