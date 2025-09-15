@@ -34,6 +34,9 @@ const DataVisualization: React.FC<DataVisualizationProps> = ({ data: initialData
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Constante para el total general (usado cuando no hay filtros)
+  const TOTAL_GENERAL_ENCUESTAS = 43064;
   const [filters, setFilters] = useState<FilterOptions>({
     minEncuestas: 0,
     maxEncuestas: Infinity,
@@ -106,16 +109,24 @@ const DataVisualization: React.FC<DataVisualizationProps> = ({ data: initialData
 
   const handleDownloadData = useCallback(() => {
     try {
+      const hasActiveFilters = activeFilters && activeFilters.length > 0;
+      
       const csvContent = [
         // Encabezados
         ['Barrio', 'Total Encuestas', 'Coincidencias', 'Porcentaje'],
         // Datos
-        ...filteredData.map(item => [
-          item.barrio,
-          item.total_encuestas,
-          item.matches_count,
-          ((item.matches_count / item.total_encuestas) * 100).toFixed(1)
-        ])
+        ...filteredData.map(item => {
+          // Si no hay filtros, usar el total general; si hay filtros, usar encuestas del barrio
+          const denominador = hasActiveFilters ? item.total_encuestas : TOTAL_GENERAL_ENCUESTAS;
+          const porcentaje = ((item.matches_count / denominador) * 100).toFixed(1);
+          
+          return [
+            item.barrio,
+            item.total_encuestas,
+            item.matches_count,
+            porcentaje
+          ];
+        })
       ].map(row => row.join(',')).join('\n');
 
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -137,7 +148,7 @@ const DataVisualization: React.FC<DataVisualizationProps> = ({ data: initialData
         variant: "destructive",
       });
     }
-  }, [filteredData]);
+  }, [filteredData, activeFilters, TOTAL_GENERAL_ENCUESTAS]);
 
   const handleExportChart = useCallback(async () => {
     try {
@@ -279,28 +290,75 @@ const DataVisualization: React.FC<DataVisualizationProps> = ({ data: initialData
   // Preparar datos para los gráficos
   const top10ChartData = React.useMemo(() => {
     const sortedData = [...data].sort((a, b) => b.matches_count - a.matches_count).slice(0, 10);
-    return sortedData.map(item => ({
-      ...item,
-      percentage: Number(((item.matches_count / item.total_encuestas) * 100).toFixed(1))
-    }));
-  }, [data]);
+    const hasActiveFilters = activeFilters && activeFilters.length > 0;
+    
+    return sortedData.map(item => {
+      // Si no hay filtros activos, usar el total general (43,064)
+      // Si hay filtros, usar el total de encuestas del barrio
+      const denominador = hasActiveFilters ? item.total_encuestas : TOTAL_GENERAL_ENCUESTAS;
+      const percentage = Number(((item.matches_count / denominador) * 100).toFixed(1));
+      
+      console.log(`📊 Barrio: ${item.barrio}`);
+      console.log(`   - Coincidencias: ${item.matches_count}`);
+      console.log(`   - ${hasActiveFilters ? 'Con filtros - Encuestas del barrio' : 'Sin filtros - Total general'}: ${denominador}`);
+      console.log(`   - Porcentaje calculado: ${percentage}%`);
+      
+      return {
+        ...item,
+        percentage
+      };
+    });
+  }, [data, activeFilters, TOTAL_GENERAL_ENCUESTAS]);
+
+  // Calcular estadísticas del Top 10 con logs
+  const top10Stats = React.useMemo(() => {
+    const hasActiveFilters = activeFilters && activeFilters.length > 0;
+    const totalCoincidenciasTop10 = top10ChartData.reduce((acc, item) => acc + item.matches_count, 0);
+    const totalEncuestasTop10 = top10ChartData.reduce((acc, item) => acc + item.total_encuestas, 0);
+    const denominadorTop10 = hasActiveFilters ? totalEncuestasTop10 : TOTAL_GENERAL_ENCUESTAS;
+    const porcentajeTop10 = denominadorTop10 > 0 ? (totalCoincidenciasTop10 / denominadorTop10 * 100).toFixed(1) : '0';
+
+    console.log(`🏆 Top 10 Estadísticas:`);
+    console.log(`   - ${hasActiveFilters ? 'Con filtros activos' : 'Sin filtros activos'}`);
+    console.log(`   - Total coincidencias Top 10: ${totalCoincidenciasTop10}`);
+    console.log(`   - Total encuestas Top 10: ${totalEncuestasTop10}`);
+    console.log(`   - Denominador usado: ${denominadorTop10} (${hasActiveFilters ? 'encuestas del Top 10' : 'total general'})`);
+    console.log(`   - Porcentaje Top 10: ${porcentajeTop10}%`);
+
+    return {
+      totalCoincidencias: totalCoincidenciasTop10,
+      totalEncuestas: hasActiveFilters ? totalEncuestasTop10 : TOTAL_GENERAL_ENCUESTAS,
+      porcentaje: porcentajeTop10
+    };
+  }, [top10ChartData, activeFilters, TOTAL_GENERAL_ENCUESTAS]);
 
   // Usar los datos de la card superior (totals) para el gráfico de Distribución General
   // Calcular los totales usando los datos filtrados (lo que realmente se está visualizando)
+  const hasActiveFilters = activeFilters && activeFilters.length > 0;
   const totalEncuestas = filteredData.reduce((acc, item) => acc + item.total_encuestas, 0);
   const totalCoincidencias = filteredData.reduce((acc, item) => acc + item.matches_count, 0);
-  const porcentajeGlobal = totalEncuestas > 0 ? ((totalCoincidencias / totalEncuestas) * 100).toFixed(1) : '0';
-  const generalChartData = totalEncuestas > 0 ? [
+  
+  // Para el gráfico general, usar el total correcto según si hay filtros o no
+  const denominadorGeneral = hasActiveFilters ? totalEncuestas : TOTAL_GENERAL_ENCUESTAS;
+  const porcentajeGlobal = denominadorGeneral > 0 ? ((totalCoincidencias / denominadorGeneral) * 100).toFixed(1) : '0';
+  
+  console.log(`🌍 Distribución General:`);
+  console.log(`   - ${hasActiveFilters ? 'Con filtros activos' : 'Sin filtros activos'}`);
+  console.log(`   - Total coincidencias: ${totalCoincidencias}`);
+  console.log(`   - Denominador usado: ${denominadorGeneral} (${hasActiveFilters ? 'encuestas filtradas' : 'total general'})`);
+  console.log(`   - Porcentaje global: ${porcentajeGlobal}%`);
+  
+  const generalChartData = denominadorGeneral > 0 ? [
     {
       barrio: `Con Coincidencias (${porcentajeGlobal}%)`,
       matches_count: totalCoincidencias,
-      total_encuestas: totalEncuestas,
+      total_encuestas: denominadorGeneral,
       percentage: Number(porcentajeGlobal)
     },
     {
       barrio: `Sin Coincidencias (${(100 - Number(porcentajeGlobal)).toFixed(1)}%)`,
-      matches_count: totalEncuestas - totalCoincidencias,
-      total_encuestas: totalEncuestas,
+      matches_count: denominadorGeneral - totalCoincidencias,
+      total_encuestas: denominadorGeneral,
       percentage: Number((100 - Number(porcentajeGlobal)).toFixed(1))
     }
   ] : [];
@@ -326,7 +384,7 @@ const DataVisualization: React.FC<DataVisualizationProps> = ({ data: initialData
           </div>
           <div className="bg-card p-4 rounded-lg shadow-xl">
             <h3 className="text-sm font-medium text-muted-foreground">Total Encuestas</h3>
-            <p className="text-2xl font-bold text-blue-500">{totalEncuestas.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-blue-500">{hasActiveFilters ? totalEncuestas.toLocaleString() : TOTAL_GENERAL_ENCUESTAS.toLocaleString()}</p>
           </div>
           <div className="bg-card p-4 rounded-lg shadow-xl">
             <h3 className="text-sm font-medium text-muted-foreground">Porcentaje Global</h3>
@@ -381,7 +439,7 @@ const DataVisualization: React.FC<DataVisualizationProps> = ({ data: initialData
                   <div className="chart-header border-b border-border pb-4 mb-4">
                     <h2 className="text-xl font-bold text-card-foreground">Distribución General de Coincidencias</h2>
                     <p className="text-muted-foreground text-sm mt-1">
-                      Total de encuestas analizadas: {totalEncuestas}
+                      Total de encuestas analizadas: {hasActiveFilters ? totalEncuestas : TOTAL_GENERAL_ENCUESTAS}
                     </p>
                   </div>
                   <div className="chart-content transition-all duration-300 ease-in-out min-h-[400px]">
@@ -390,7 +448,7 @@ const DataVisualization: React.FC<DataVisualizationProps> = ({ data: initialData
                       chartType={chartType}
                       showPercentage={showPercentage}
                       dataView={dataView}
-                      totalEncuestas={totalEncuestas}
+                      totalEncuestas={hasActiveFilters ? totalEncuestas : TOTAL_GENERAL_ENCUESTAS}
                       totalCoincidencias={totalCoincidencias}
                       porcentajeGlobal={porcentajeGlobal}
                     />
@@ -411,16 +469,9 @@ const DataVisualization: React.FC<DataVisualizationProps> = ({ data: initialData
                         chartType={chartType}
                         showPercentage={showPercentage}
                         dataView="top10"
-                        totalEncuestas={top10ChartData.reduce((acc, item) => acc + item.total_encuestas, 0)}
-                        totalCoincidencias={top10ChartData.reduce((acc, item) => acc + item.matches_count, 0)}
-                        porcentajeGlobal={
-                          top10ChartData.reduce((acc, item) => acc + item.total_encuestas, 0) > 0
-                            ? (
-                                top10ChartData.reduce((acc, item) => acc + item.matches_count, 0) /
-                                top10ChartData.reduce((acc, item) => acc + item.total_encuestas, 0) * 100
-                              ).toFixed(1)
-                            : '0'
-                        }
+                        totalEncuestas={top10Stats.totalEncuestas}
+                        totalCoincidencias={top10Stats.totalCoincidencias}
+                        porcentajeGlobal={top10Stats.porcentaje}
                       />
                   </div>
                 </div>

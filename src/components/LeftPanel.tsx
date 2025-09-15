@@ -97,10 +97,18 @@ const LeftPanel: React.FC<LeftPanelProps> = ({
       console.log('🔄 Consultando datos filtrados en backend (página', page + 1, ')...');
       try {
         // Consulta los datos paginados
-        const { data, error } = await supabase.rpc('get_filtered_persons_with_coords', {
-          filters: combinedFilters,
-          limit_rows: PAGE_SIZE,
-          offset_rows: page * PAGE_SIZE
+        // Usar la función batch para obtener los datos normalizados igual que el exportador
+        const from_offset = page * PAGE_SIZE;
+        const to_offset = from_offset + PAGE_SIZE - 1;
+        const filtrosFormateados = combinedFilters.map(filter => ({
+          category: filter.category || '',
+          questionId: filter.questionId,
+          response: filter.response || ''
+        }));
+        const { data, error } = await supabase.rpc('get_filtered_persons_by_batch', {
+          filters: filtrosFormateados,
+          from_offset,
+          to_offset
         });
         // Consulta el total de registros filtrados
         const { data: totalData, error: errorCount } = await supabase.rpc('count_filtered_persons_with_coords', {
@@ -110,8 +118,15 @@ const LeftPanel: React.FC<LeftPanelProps> = ({
           console.error('❌ Error consultando datos filtrados:', error.message);
           setTableRows([]);
         } else {
-          setTableRows(data || []);
-          console.log('✅ Datos filtrados recibidos (backend):', data ? data.length : 0);
+          // Procesar igual que el exportador Excel
+          const flatRows = (data || []).map(row => ({
+            ...row,
+            ...(row.sociodemographic_data || {}),
+            ...(row.metadata || {}),
+            ...(row.location_data || {}),
+          }));
+          setTableRows(flatRows);
+          console.log('✅ Datos filtrados recibidos (batch):', flatRows.length);
         }
         if (errorCount) {
           console.error('❌ Error consultando total filtrado:', errorCount.message);

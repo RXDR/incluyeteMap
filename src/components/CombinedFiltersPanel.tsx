@@ -49,7 +49,7 @@ export default function CombinedFiltersPanel({ onFiltersChange, onStatsChange }:
         return hasActiveFilters || isExpanded;
       });
     }
-    
+
     if (searchTerm) {
       // Filtrar por término de búsqueda
       return categories.filter(cat => 
@@ -57,9 +57,10 @@ export default function CombinedFiltersPanel({ onFiltersChange, onStatsChange }:
         cat.trim().toLowerCase().includes(searchTerm.trim().toLowerCase())
       );
     }
-    
+
     // Mostrar todas las categorías solo cuando se solicite explícitamente
-    return categories;
+    // Aquí filtramos para ocultar 'OTROS'
+    return categories.filter(cat => cat !== 'OTROS');
   }, [categories, searchTerm, showAllCategories, combinedFilters, expandedCategories]);
 
   // =====================================================
