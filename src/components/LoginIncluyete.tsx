@@ -32,7 +32,7 @@ export default function LoginIncluyete({ onLogin }) {
       </div>
       <form onSubmit={handleSubmit}>
         <label style={{ fontWeight: 500 }}>Correo electrónico</label>
-        <input type="email" value={email} onChange={e => setEmail(e.target.value)} required style={{ width: '100%', marginBottom: 16, padding: 8, borderRadius: 6, border: '1px solid #ccc' }} />
+        <input type="text" value={email} onChange={e => setEmail(e.target.value)} required style={{ width: '100%', marginBottom: 16, padding: 8, borderRadius: 6, border: '1px solid #ccc' }} />
         <label style={{ fontWeight: 500 }}>Contraseña</label>
         <input type="password" value={password} onChange={e => setPassword(e.target.value)} required style={{ width: '100%', marginBottom: 16, padding: 8, borderRadius: 6, border: '1px solid #ccc' }} />
         {error && <div style={{ color: 'red', marginBottom: 12 }}>{error}</div>}

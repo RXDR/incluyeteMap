@@ -185,7 +185,6 @@ const LeftPanel: React.FC<LeftPanelProps> = ({
                 onStatsChange={handleCombinedStatsChange}
               />
               {/* Botón para ver tabla de datos solo si filtros están listos y hay filtros activos */}
-              {mapViewType === 'poligonos' && (
                 <div className="flex flex-col gap-2 mt-4">
                   <button
                     className={`px-4 py-2 rounded font-semibold flex items-center justify-center gap-2 shadow ${filtersReady && combinedFilters.length > 0 ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-400 text-gray-200 cursor-not-allowed'}`}
@@ -199,9 +198,8 @@ const LeftPanel: React.FC<LeftPanelProps> = ({
                   </button>
                   <ExportFilteredPersonsExcel combinedFilters={combinedFilters} />
                 </div>
-              )}
               {/* Modal grande para la tabla de datos */}
-              {mapViewType === 'poligonos' && modalOpen && (
+              {modalOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-60">
                   <div className="bg-white rounded-lg shadow-lg w-[90vw] h-[80vh] flex flex-col z-[101]">
                     <div className="flex justify-between items-center p-4 border-b">
